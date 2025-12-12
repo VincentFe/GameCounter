@@ -1,6 +1,15 @@
 {
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js"
+  },
   "dependencies": {
     "open": "^11.0.0"
   },
-  "type": "module"
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.4"
+  }
 }

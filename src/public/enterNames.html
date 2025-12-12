@@ -2,24 +2,264 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Enter Names</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Players - GameCounter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 0.95em;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 1.05em;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+    }
+
+    .btn-create {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-create:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-create:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-cancel:hover {
+      background: #e0e0e0;
+    }
+
+    .status {
+      margin: 15px 0;
+      padding: 12px 15px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      display: block;
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    h2 {
+      color: #333;
+      margin: 30px 0 20px 0;
+      font-size: 1.5em;
+      border-top: 2px solid #eee;
+      padding-top: 20px;
+    }
+
+    .players-list {
+      list-style: none;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .player-item:hover {
+      background: #f0f2f7;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .player-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 1.1em;
+    }
+
+    .player-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-delete {
+      padding: 8px 16px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+      background: #ff5252;
+      transform: translateY(-1px);
+    }
+
+    .btn-delete:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: #999;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .form-controls {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Enter a Name</h1>
+  <div class="container">
+    <header>
+      <h1>➕ Add Players</h1>
+      <p>Enter your player names to get started</p>
+    </header>
 
-  <form id="nameForm" onsubmit="return false;">
-    <label for="playerName">Name:</label>
-    <input type="text" id="playerName" autocomplete="off" required />
-    <br /><br />
+    <div class="content">
+      <form id="nameForm" onsubmit="return false;">
+        <div class="form-group">
+          <label for="playerName">Player Name:</label>
+          <input
+            type="text"
+            id="playerName"
+            autocomplete="off"
+            placeholder="Enter a player name..."
+            required
+          />
+        </div>
 
-    <button type="button" id="createBtn">Create</button>
-    <button type="button" id="cancelBtn">Cancel</button>
-  </form>
+        <div class="form-controls">
+          <button type="button" id="createBtn" class="btn btn-create">
+            ✅ Add Player
+          </button>
+          <button type="button" id="cancelBtn" class="btn btn-cancel">
+            🏠 Back Home
+          </button>
+        </div>
 
-  <h2>Players</h2>
-  <ul id="playerList"></ul>
+        <div id="status" class="status" role="alert"></div>
+      </form>
 
-  <div id="status" aria-live="polite" style="margin-top:12px"></div>
+      <h2>Players List</h2>
+      <ul id="playerList" class="players-list"></ul>
+      <div id="emptyState" class="empty-state" style="display: none;">
+        📋 No players added yet. Enter a name above to get started!
+      </div>
+    </div>
+  </div>
 
   <script src="/public/script.js"></script>
 </body>

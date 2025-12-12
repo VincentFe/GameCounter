@@ -2,16 +2,258 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Home - GameCounter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameCounter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 0.95em;
+      opacity: 0.9;
+    }
+
+    .controls {
+      padding: 20px 30px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #eee;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #e0e0e0;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #ff5252;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+
+    .players-list {
+      list-style: none;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .player-item:hover {
+      background: #f0f2f7;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+
+    .player-score {
+      color: #667eea;
+      font-weight: 700;
+      font-size: 1.3em;
+    }
+
+    .player-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .score-display {
+      padding: 8px 16px;
+      background: #e7f1ff;
+      border-radius: 6px;
+      color: #667eea;
+      font-weight: 700;
+    }
+
+    .btn-sm {
+      padding: 8px 12px;
+      font-size: 0.9em;
+    }
+
+    .btn-delete {
+      background: #ff6b6b;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background: #ff5252;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    .empty-state-text {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+    }
+
+    .score-controls {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .score-input {
+      width: 50px;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .score-btn {
+      padding: 6px 10px;
+      font-size: 0.85em;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.8em;
+      }
+
+      .player-item {
+        flex-wrap: wrap;
+      }
+
+      .player-actions {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to GameCounter</h1>
+  <div class="container">
+    <header>
+      <h1>🎮 GameCounter</h1>
+      <p>Track your game scores easily</p>
+    </header>
 
-  <button id="startGameBtn">Enter Players</button>
-  <button id="deletePlayersBtn" type="button">Delete Players</button>
+    <div class="controls">
+      <button id="startGameBtn" class="btn btn-primary">🎮 Start Game</button>
+      <button id="deletePlayersBtn" class="btn btn-secondary" type="button">🗑️ Manage Players</button>
+    </div>
 
-  <h2>Players</h2>
-  <ul id="playerList"></ul>
+    <div class="content">
+      <h2>Players & Scores</h2>
+      <ul id="playerList" class="players-list"></ul>
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">No players yet. Click "Enter Players" to add some!</div>
+      </div>
+    </div>
+  </div>
 
   <script src="/public/script.js"></script>
 </body>
