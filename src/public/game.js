@@ -2,6 +2,20 @@
 let selectedPlayers = new Set();
 let allPlayers = [];
 
+async function endGame() {
+  try {
+    const resp = await fetch("/endGame", { method: "POST" });
+    if (resp.ok) {
+      window.location.href = "/leaderboard";
+    } else {
+      alert("Failed to end game");
+    }
+  } catch (e) {
+    console.error("Error ending game:", e);
+    alert("Error ending game");
+  }
+}
+
 async function loadGamePlayers() {
   const container = document.getElementById("playersList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -26,6 +40,21 @@ async function loadGamePlayers() {
       const playerName = typeof player === "string" ? player : player.name;
       const playerScore = typeof player === "object" ? player.score : 0;
 
+      // Create row container
+      const row = document.createElement("div");
+      row.className = "player-row";
+
+      // Subtract button (outside, left)
+      const subtractBtn = document.createElement("button");
+      subtractBtn.className = "player-btn";
+      subtractBtn.textContent = "−";
+      subtractBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, -1);
+      });
+      row.appendChild(subtractBtn);
+
+      // Player card
       const card = document.createElement("div");
       card.className = "player-card";
       card.dataset.name = playerName;
@@ -33,19 +62,10 @@ async function loadGamePlayers() {
       const header = document.createElement("div");
       header.className = "player-header";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = "player-checkbox";
-      checkbox.addEventListener("change", (e) => {
-        e.stopPropagation();
-        togglePlayer(playerName, checkbox.checked);
-      });
-
       const nameDiv = document.createElement("div");
       nameDiv.className = "player-name";
       nameDiv.textContent = playerName;
 
-      header.appendChild(checkbox);
       header.appendChild(nameDiv);
 
       const scoreDiv = document.createElement("div");
@@ -57,11 +77,23 @@ async function loadGamePlayers() {
 
       // Click card to select/deselect
       card.addEventListener("click", () => {
-        checkbox.checked = !checkbox.checked;
-        togglePlayer(playerName, checkbox.checked);
+        const isCurrentlySelected = selectedPlayers.has(playerName);
+        togglePlayer(playerName, !isCurrentlySelected);
       });
 
-      container.appendChild(card);
+      row.appendChild(card);
+
+      // Add button (outside, right)
+      const addBtn = document.createElement("button");
+      addBtn.className = "player-btn";
+      addBtn.textContent = "+";
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, 1);
+      });
+      row.appendChild(addBtn);
+
+      container.appendChild(row);
     });
 
     updateScoreUpdateSection();
@@ -112,6 +144,27 @@ function updateScoreUpdateSection() {
   const section = document.getElementById("scoreUpdateSection");
   if (section) {
     section.style.display = selectedPlayers.size > 0 ? "block" : "none";
+  }
+}
+
+async function updatePlayerScoreDirect(playerName, points) {
+  try {
+    const resp = await fetch("/updateScore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: playerName, score: points }),
+    });
+
+    if (resp.ok) {
+      loadGamePlayers();
+    } else {
+      const errorData = await resp.json();
+      console.error("Score update failed:", errorData);
+      alert("Failed to update score");
+    }
+  } catch (e) {
+    console.error("Error updating score:", e);
+    alert("Error updating score");
   }
 }
 

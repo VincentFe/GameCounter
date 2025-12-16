@@ -2,7 +2,8 @@ import Game from "./models/Game.js";
 let gameInstance = null;
 export async function initializeGame(baseDir) {
     if (!gameInstance) {
-        gameInstance = await Game.loadFromFile(baseDir);
+        // Start with an empty game instead of loading from old names.txt
+        gameInstance = new Game([], "Unnamed Game");
     }
     return gameInstance;
 }

@@ -5,7 +5,8 @@ let gameInstance: Game | null = null;
 
 export async function initializeGame(baseDir: string): Promise<Game> {
   if (!gameInstance) {
-    gameInstance = await Game.loadFromFile(baseDir);
+    // Start with an empty game instead of loading from old names.txt
+    gameInstance = new Game([], "Unnamed Game");
   }
   return gameInstance;
 }

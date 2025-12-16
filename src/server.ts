@@ -16,7 +16,8 @@ import {
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
-import { initializeGame } from "./gameManager.js";
+import { renderLeaderboard, getLeaderboard } from "./routes/leaderboard.js";
+import { initializeGame, saveGame } from "./gameManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,10 @@ const server = http.createServer(
       return setPlayerScore(req, res, __dirname);
     }
 
+    if (method === "GET" && url === "/api/leaderboard") {
+      return getLeaderboard(res);
+    }
+
     if (method === "GET" && url === "/playerNames") {
       return getPlayerNames(res, __dirname);
     }
@@ -71,6 +76,17 @@ const server = http.createServer(
 
     if (method === "GET" && url === "/game") {
       return renderGamePage(res, __dirname);
+    }
+
+    if (method === "GET" && url === "/leaderboard") {
+      return renderLeaderboard(res, __dirname);
+    }
+
+    if (method === "POST" && url === "/endGame") {
+      return saveGame(__dirname).then(() => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      });
     }
 
     //
