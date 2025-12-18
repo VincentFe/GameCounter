@@ -293,19 +293,25 @@ export function renderLeaderboard(res, baseDir) {
 }
 export async function getLeaderboard(res) {
     try {
-        const { getGame } = await import("../gameManager.js");
-        const game = getGame();
+        const { gameManager } = await import("../gameManager.js");
+        const game = gameManager.getGame();
         if (!game) {
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify([]));
             return;
         }
-        const players = game.getPlayers();
-        const sorted = players
-            .map((p) => ({ name: p.name, score: p.getScore() }))
-            .sort((a, b) => b.score - a.score);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(sorted));
+        const result = game.getPlayers();
+        if (result.parmSuccess()) {
+            const players = result.parmObject();
+            const sorted = players
+                .map((p) => ({ name: p.name, score: p.getScore() }))
+                .sort((a, b) => b.score - a.score);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify(sorted));
+        }
+        else {
+            throw new Error("Failed to retrieve players");
+        }
     }
     catch (e) {
         console.error("Error getting leaderboard:", e);

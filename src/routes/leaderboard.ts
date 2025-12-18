@@ -1,4 +1,5 @@
 import { ServerResponse } from "http";
+import { Player } from "../models/Player.js";
 
 export function renderLeaderboard(res: ServerResponse, baseDir: string): void {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -296,8 +297,8 @@ export function renderLeaderboard(res: ServerResponse, baseDir: string): void {
 
 export async function getLeaderboard(res: ServerResponse): Promise<void> {
   try {
-    const { getGame } = await import("../gameManager.js");
-    const game = getGame();
+    const { gameManager } = await import("../gameManager.js");
+    const game = gameManager.getGame();
 
     if (!game) {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -305,13 +306,19 @@ export async function getLeaderboard(res: ServerResponse): Promise<void> {
       return;
     }
 
-    const players = game.getPlayers();
-    const sorted = players
-      .map((p) => ({ name: p.name, score: p.getScore() }))
-      .sort((a, b) => b.score - a.score);
+    const result = game.getPlayers();
+    if (result.parmSuccess()) {
+      const players: Player[] = result.parmObject() as Player[];
+      const sorted = players
+        .map((p) => ({ name: p.name, score: p.getScore() }))
+        .sort((a, b) => b.score - a.score);
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(sorted));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(sorted));
+      } 
+    else {
+      throw new Error("Failed to retrieve players");
+    }
   } catch (e) {
     console.error("Error getting leaderboard:", e);
     res.writeHead(500, { "Content-Type": "application/json" });
