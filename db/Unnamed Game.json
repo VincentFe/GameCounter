@@ -2,12 +2,13 @@
   "name": "Unnamed Game",
   "players": [
     {
-      "name": "test",
-      "score": 2
+      "name": "ztrh",
+      "score": 1
     },
     {
-      "name": "tested",
-      "score": 4
+      "name": "ztrhzz",
+      "score": 0
     }
-  ]
+  ],
+  "active": false
 }
