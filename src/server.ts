@@ -8,6 +8,7 @@ import homeRoute from "./routes/home.js";
 import {
   renderEnterNames,
   saveName,
+  setGameName,
   getPlayers,
   deletePlayer,
   updatePlayerScore,
@@ -39,6 +40,10 @@ const server = http.createServer(
 
     if (method === "POST" && url === "/saveName") {
       return saveName(req, res, __dirname);
+    }
+
+    if (method === "POST" && url === "/setGameName") {
+      return setGameName(req, res, __dirname);
     }
 
     if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {

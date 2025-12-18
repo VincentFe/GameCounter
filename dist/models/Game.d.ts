@@ -18,6 +18,7 @@ export declare class Game {
     toPlainNames(): string[];
     toPlayersWithScores(): any[];
     getGameName(): string;
+    setName(name: string): void;
     saveToFile(baseDir: string): Promise<void>;
 }
 export default Game;

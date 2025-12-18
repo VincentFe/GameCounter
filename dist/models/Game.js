@@ -59,6 +59,9 @@ export class Game {
     getGameName() {
         return this.name;
     }
+    setName(name) {
+        this.name = name;
+    }
     async saveToFile(baseDir) {
         const dbDir = path.join(baseDir, "..", "db");
         // Sanitize filename: remove invalid characters

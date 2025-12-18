@@ -133,13 +133,31 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-//
-// HOME PAGE BUTTON: Enter Players
-//
+// HOME / ENTER NAMES START BUTTON: navigate according to page
 const startBtn = document.getElementById("startGameBtn");
 if (startBtn) {
   startBtn.addEventListener("click", () => {
-    window.location.href = "/game";
+    const path = window.location.pathname;
+    if (path === "/" || path === "") {
+      // from home -> go to enter names
+      window.location.href = "/enterNames";
+    } else if (path === "/enterNames" || path.startsWith("/enterNames")) {
+      // from enter names -> start game
+      // only proceed if there are players; otherwise warn
+      fetch('/playerNames')
+        .then(r => r.ok ? r.json() : [])
+        .then(list => {
+          if (!list || list.length === 0) {
+            alert('Please add at least one player before starting the game.');
+            return;
+          }
+          window.location.href = "/game";
+        })
+        .catch(() => window.location.href = "/game");
+    } else {
+      // fallback
+      window.location.href = "/enterNames";
+    }
   });
 }
 
@@ -159,6 +177,55 @@ const createBtn = document.getElementById("createBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const nameInput = document.getElementById("playerName");
 const statusDiv = document.getElementById("status");
+const setGameBtn = document.getElementById("setGameBtn");
+const gameNameInput = document.getElementById("gameName");
+
+// Game name Set/Edit toggle
+let gameNameIsSet = false;
+
+if (setGameBtn) {
+  setGameBtn.addEventListener("click", async () => {
+    if (!gameNameIsSet) {
+      // Set mode: save the game name
+      const gameName = (gameNameInput?.value || "").trim();
+      if (!gameName) {
+        alert("Please enter a game name.");
+        gameNameInput?.focus();
+        return;
+      }
+
+      setGameBtn.disabled = true;
+      try {
+        const resp = await fetch("/setGameName", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: gameName }),
+        });
+
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          // Update UI: disable input, change button to "Edit"
+          gameNameIsSet = true;
+          gameNameInput.disabled = true;
+          setGameBtn.textContent = "Edit";
+        } else {
+          alert("Failed to set game name: " + (data?.error || resp.statusText));
+        }
+      } catch (e) {
+        alert("Network error: " + e.message);
+      } finally {
+        setGameBtn.disabled = false;
+      }
+    } else {
+      // Edit mode: enable input, clear it, change button back to "Set"
+      gameNameIsSet = false;
+      gameNameInput.disabled = false;
+      gameNameInput.value = "";
+      setGameBtn.textContent = "Set";
+      gameNameInput.focus();
+    }
+  });
+}
 
 if (createBtn) {
   createBtn.addEventListener("click", async () => {

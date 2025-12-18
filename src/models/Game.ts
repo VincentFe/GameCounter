@@ -75,6 +75,10 @@ export class Game {
     return this.name;
   }
 
+  setName(name: string): void {
+    this.name = name;
+  }
+
   async saveToFile(baseDir: string): Promise<void> {
     const dbDir = path.join(baseDir, "..", "db");
     // Sanitize filename: remove invalid characters

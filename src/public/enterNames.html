@@ -53,6 +53,30 @@
       margin-bottom: 25px;
     }
 
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-add {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95em;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex-shrink: 0;
+    }
+
+    input[type="text"]:disabled {
+      background-color: #f0f0f0;
+      color: #999;
+      cursor: not-allowed;
+    }
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -231,19 +255,39 @@
     <div class="content">
       <form id="nameForm" onsubmit="return false;">
         <div class="form-group">
+          <label for="gameName">Game Name:</label>
+          <div class="input-row">
+            <input
+              type="text"
+              id="gameName"
+              autocomplete="off"
+              placeholder="Enter a game name..."
+            />
+            <button type="button" id="setGameBtn" class="btn-add">
+              Set
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label for="playerName">Player Name:</label>
-          <input
-            type="text"
-            id="playerName"
-            autocomplete="off"
-            placeholder="Enter a player name..."
-            required
-          />
+          <div class="input-row">
+            <input
+              type="text"
+              id="playerName"
+              autocomplete="off"
+              placeholder="Enter a player name..."
+              required
+            />
+            <button type="button" id="createBtn" class="btn-add">
+              Add
+            </button>
+          </div>
         </div>
 
         <div class="form-controls">
-          <button type="button" id="createBtn" class="btn btn-create">
-            ✅ Add Player
+          <button type="button" id="startGameBtn" class="btn btn-create">
+            Start Game
           </button>
           <button type="button" id="cancelBtn" class="btn btn-cancel">
             🏠 Back Home
