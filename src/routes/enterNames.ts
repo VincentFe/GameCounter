@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { IncomingMessage, ServerResponse } from "http";
-import { getGame, saveGame } from "../gameManager.js";
+import { getGame, saveGame, loadGameByName } from "../gameManager.js";
 import Player from "../models/Player.js";
 
 export function renderEnterNames(
@@ -297,4 +297,37 @@ export function setPlayerScore(
     res.writeHead(500);
     res.end(JSON.stringify({ ok: false, error: "Request error" }));
   });
+}
+
+export function listGames(res: ServerResponse, baseDir: string): void {
+  try {
+    const dbDir = path.join(baseDir, "..", "db");
+    const files = fs.readdirSync(dbDir);
+    const games = files
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => file.replace(".json", ""));
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(games));
+  } catch (err) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify([]));
+  }
+}
+
+export function saveGameInstance(
+  req: IncomingMessage,
+  res: ServerResponse,
+  baseDir: string
+): void {
+  (async () => {
+    try {
+      const game = getGame();
+      await saveGame(baseDir);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ ok: false, error: "Failed to save game" }));
+    }
+  })();
 }

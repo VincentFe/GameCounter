@@ -7,4 +7,6 @@ export declare function getPlayerNames(res: ServerResponse, baseDir: string): vo
 export declare function deletePlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function updatePlayerScore(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function setPlayerScore(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
+export declare function listGames(res: ServerResponse, baseDir: string): void;
+export declare function saveGameInstance(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 //# sourceMappingURL=enterNames.d.ts.map

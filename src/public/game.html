@@ -352,12 +352,14 @@
   <div class="container">
     <header>
       <h1>🎮 Game</h1>
-      <button class="header-btn" onclick="endGame()">🏁 End Game</button>
+      <div style="display: flex; gap: 10px;">
+        <button id="saveGameBtn" class="header-btn">💾 Save Game</button>
+        <button class="header-btn" onclick="endGame()">🏁 End Game</button>
+      </div>
     </header>
 
     <div class="controls">
       <button id="addPlayerBtn" class="btn btn-primary">➕ Add Player</button>
-      <button id="backBtn" class="btn btn-secondary">🔙 Back Home</button>
     </div>
 
     <div class="content">

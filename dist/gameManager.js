@@ -1,4 +1,6 @@
+import path from "path";
 import Game from "./models/Game.js";
+import fs from "fs/promises";
 let gameInstance = null;
 export async function initializeGame(baseDir) {
     if (!gameInstance) {
@@ -13,6 +15,19 @@ export function getGame() {
     }
     return gameInstance;
 }
+export async function loadGameByName(baseDir, gameName) {
+    try {
+        const dbDir = path.join(baseDir, "..", "db");
+        const filePath = path.join(dbDir, `${gameName}.json`);
+        const data = await fs.readFile(filePath, "utf8");
+        const gameData = JSON.parse(data);
+        gameInstance = Game.fromJSON(gameData);
+        return gameInstance;
+    }
+    catch (err) {
+        throw new Error(`Failed to load game "${gameName}": ${err}`);
+    }
+}
 export async function saveGame(baseDir) {
     if (gameInstance) {
         await gameInstance.saveToFile(baseDir);
@@ -21,5 +36,5 @@ export async function saveGame(baseDir) {
 export function resetGame() {
     gameInstance = null;
 }
-export default { initializeGame, getGame, saveGame, resetGame };
+export default { initializeGame, getGame, loadGameByName, saveGame, resetGame };
 //# sourceMappingURL=gameManager.js.map

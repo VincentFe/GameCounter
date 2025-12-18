@@ -2,6 +2,20 @@
 let selectedPlayers = new Set();
 let allPlayers = [];
 
+async function saveGame() {
+  try {
+    const resp = await fetch("/saveGame", { method: "POST" });
+    if (resp.ok) {
+      window.location.href = "/";
+    } else {
+      alert("Failed to save game");
+    }
+  } catch (e) {
+    console.error("Error saving game:", e);
+    alert("Error saving game");
+  }
+}
+
 async function endGame() {
   try {
     const resp = await fetch("/endGame", { method: "POST" });
@@ -285,11 +299,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const backBtn = document.getElementById("backBtn");
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      window.location.href = "/";
-    });
+  const saveGameBtn = document.getElementById("saveGameBtn");
+  if (saveGameBtn) {
+    saveGameBtn.addEventListener("click", saveGame);
   }
 
   const addScoreBtn = document.getElementById("addScoreBtn");

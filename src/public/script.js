@@ -127,9 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadManagePlayers();
   } else if (window.location.pathname === "/game") {
     if (typeof loadGamePlayers === "function") loadGamePlayers();
-  } else {
-    loadPlayers();
   }
+  // Note: home page no longer loads players list
 });
 
 
@@ -161,12 +160,96 @@ if (startBtn) {
   });
 }
 
-// NEW: Delete Players (show per-player delete buttons when clicked)
-const deletePlayersBtn = document.getElementById("deletePlayersBtn");
+// NEW: Load Game (show modal with saved games)
+const loadGameBtn = document.getElementById("loadGameBtn");
+if (loadGameBtn) {
+  loadGameBtn.addEventListener("click", async () => {
+    openGameSelection();
+  });
+}
 
-if (deletePlayersBtn) {
-  deletePlayersBtn.addEventListener("click", () => {
-    window.location.href = "/enterNames";
+let selectedGame = null;
+
+async function openGameSelection() {
+  const modal = document.getElementById("gameSelectionModal");
+  const gamesList = document.getElementById("gamesList");
+  const noGamesState = document.getElementById("noGamesState");
+  const continueGameBtn = document.getElementById("continueGameBtn");
+
+  if (!modal) return;
+
+  modal.style.display = "flex";
+
+  try {
+    const resp = await fetch("/listGames");
+    const games = resp.ok ? await resp.json() : [];
+
+    gamesList.innerHTML = "";
+    selectedGame = null;
+    continueGameBtn.disabled = true;
+
+    if (games.length === 0) {
+      noGamesState.style.display = "block";
+      gamesList.style.display = "none";
+      return;
+    }
+
+    noGamesState.style.display = "none";
+    gamesList.style.display = "flex";
+
+    games.forEach((gameName) => {
+      const item = document.createElement("div");
+      item.className = "game-item";
+
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.className = "game-radio";
+      radio.name = "game-selection";
+      radio.value = gameName;
+      radio.addEventListener("change", () => {
+        selectedGame = gameName;
+        continueGameBtn.disabled = false;
+        // Update UI: mark selected
+        document.querySelectorAll(".game-item").forEach((el) => {
+          el.classList.remove("selected");
+        });
+        item.classList.add("selected");
+      });
+
+      const label = document.createElement("label");
+      label.className = "game-name";
+      label.textContent = gameName;
+      label.style.cursor = "pointer";
+      label.style.flex = "1";
+      label.addEventListener("click", () => {
+        radio.click();
+      });
+
+      item.appendChild(radio);
+      item.appendChild(label);
+      gamesList.appendChild(item);
+    });
+  } catch (e) {
+    console.error("Error loading games:", e);
+    noGamesState.style.display = "block";
+  }
+}
+
+function closeGameSelection() {
+  const modal = document.getElementById("gameSelectionModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+const continueGameBtn = document.getElementById("continueGameBtn");
+if (continueGameBtn) {
+  continueGameBtn.addEventListener("click", () => {
+    if (selectedGame) {
+      window.location.href = `/game?game=${encodeURIComponent(selectedGame)}`;
+    } else {
+      alert("Please select a game first.");
+    }
   });
 }
 

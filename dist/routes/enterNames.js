@@ -257,4 +257,33 @@ export function setPlayerScore(req, res, baseDir) {
         res.end(JSON.stringify({ ok: false, error: "Request error" }));
     });
 }
+export function listGames(res, baseDir) {
+    try {
+        const dbDir = path.join(baseDir, "..", "db");
+        const files = fs.readdirSync(dbDir);
+        const games = files
+            .filter((file) => file.endsWith(".json"))
+            .map((file) => file.replace(".json", ""));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(games));
+    }
+    catch (err) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify([]));
+    }
+}
+export function saveGameInstance(req, res, baseDir) {
+    (async () => {
+        try {
+            const game = getGame();
+            await saveGame(baseDir);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true }));
+        }
+        catch (err) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ ok: false, error: "Failed to save game" }));
+        }
+    })();
+}
 //# sourceMappingURL=enterNames.js.map
