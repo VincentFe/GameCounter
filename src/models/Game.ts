@@ -5,10 +5,12 @@ import Player from "./Player.js";
 export class Game {
   private players: Player[];
   private name: string;
+  private active: boolean;
 
-  constructor(players: Player[] = [], name: string = "Default Game") {
+  constructor(players: Player[] = [], name: string = "Default Game", active: boolean = true) {
     this.players = players;
     this.name = name;
+    this.active = active;
   }
 
   addPlayer(player: Player | string): void {
@@ -50,17 +52,19 @@ export class Game {
     return true;
   }
 
-  toJSON(): { name: string; players: any[] } {
+  toJSON(): { name: string; players: any[]; active: boolean } {
     return {
       name: this.name,
       players: this.players.map((p) => p.toJSON()),
+      active: this.active,
     };
   }
 
   static fromJSON(obj: any): Game {
     const players = (obj?.players || []).map(Player.fromJSON);
     const name = obj?.name || "Default Game";
-    return new Game(players, name);
+    const active = typeof obj?.active === "boolean" ? obj.active : true;
+    return new Game(players, name, active);
   }
 
   toPlainNames(): string[] {
@@ -77,6 +81,14 @@ export class Game {
 
   setName(name: string): void {
     this.name = name;
+  }
+
+  setActive(active: boolean): void {
+    this.active = active;
+  }
+
+  isActive(): boolean {
+    return this.active;
   }
 
   async saveToFile(baseDir: string): Promise<void> {

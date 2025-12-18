@@ -303,9 +303,25 @@ export function listGames(res: ServerResponse, baseDir: string): void {
   try {
     const dbDir = path.join(baseDir, "..", "db");
     const files = fs.readdirSync(dbDir);
-    const games = files
-      .filter((file) => file.endsWith(".json"))
-      .map((file) => file.replace(".json", ""));
+    const games: string[] = [];
+
+    // Filter for active games
+    files.forEach((file) => {
+      if (file.endsWith(".json")) {
+        try {
+          const filePath = path.join(dbDir, file);
+          const data = fs.readFileSync(filePath, "utf8");
+          const gameData = JSON.parse(data);
+          if (gameData.active !== false) {
+            // Include game if active is true or not specified (backward compatibility)
+            games.push(file.replace(".json", ""));
+          }
+        } catch (e) {
+          // Skip files that can't be parsed
+        }
+      }
+    });
+
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(games));
   } catch (err) {
@@ -374,4 +390,23 @@ export function addPlayer(
     res.writeHead(500);
     res.end(JSON.stringify({ ok: false, error: "Request error" }));
   });
+}
+
+export function markGameInactive(
+  req: IncomingMessage,
+  res: ServerResponse,
+  baseDir: string
+): void {
+  (async () => {
+    try {
+      const game = getGame();
+      game.setActive(false);
+      await saveGame(baseDir);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ ok: false, error: "Failed to mark game inactive" }));
+    }
+  })();
 }

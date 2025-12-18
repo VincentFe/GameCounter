@@ -85,7 +85,7 @@ function addNewPlayerEntry() {
 
 async function endGame() {
   try {
-    const resp = await fetch("/endGame", { method: "POST" });
+    const resp = await fetch("/markGameInactive", { method: "POST" });
     if (resp.ok) {
       window.location.href = "/leaderboard";
     } else {

@@ -2,9 +2,10 @@ import fs from "fs/promises";
 import path from "path";
 import Player from "./Player.js";
 export class Game {
-    constructor(players = [], name = "Default Game") {
+    constructor(players = [], name = "Default Game", active = true) {
         this.players = players;
         this.name = name;
+        this.active = active;
     }
     addPlayer(player) {
         const p = player instanceof Player ? player : new Player(player);
@@ -43,12 +44,14 @@ export class Game {
         return {
             name: this.name,
             players: this.players.map((p) => p.toJSON()),
+            active: this.active,
         };
     }
     static fromJSON(obj) {
         const players = (obj?.players || []).map(Player.fromJSON);
         const name = obj?.name || "Default Game";
-        return new Game(players, name);
+        const active = typeof obj?.active === "boolean" ? obj.active : true;
+        return new Game(players, name, active);
     }
     toPlainNames() {
         return this.players.map((p) => p.name);
@@ -61,6 +64,12 @@ export class Game {
     }
     setName(name) {
         this.name = name;
+    }
+    setActive(active) {
+        this.active = active;
+    }
+    isActive() {
+        return this.active;
     }
     async saveToFile(baseDir) {
         const dbDir = path.join(baseDir, "..", "db");

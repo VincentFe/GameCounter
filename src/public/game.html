@@ -400,25 +400,25 @@
 <body>
   <div class="container">
     <header>
-      <h1>🎮 Game</h1>
+      <h1>Game</h1>
     </header>
 
     <div class="controls">
-      <button id="addPlayerBtn" class="btn btn-primary">➕ Add Player</button>
-      <button id="saveGameBtn" class="btn btn-secondary">💾 Save Game</button>
-      <button class="btn btn-secondary" onclick="endGame()">🏁 End Game</button>
+      <button id="addPlayerBtn" class="btn btn-primary">Add Player</button>
+      <button id="saveGameBtn" class="btn btn-secondary">Save Game</button>
+      <button class="btn btn-secondary" onclick="endGame()">End Game</button>
     </div>
 
     <div class="content">
       <h2>Players in Game</h2>
       <div id="playersList" class="players-grid"></div>
       <div id="emptyState" class="empty-state" style="display: none;">
-        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-icon">List Empty</div>
         <div class="empty-state-text">No players yet. Click "Add Player" to get started!</div>
       </div>
 
       <div id="scoreUpdateSection" class="score-update" style="display: none;">
-        <h3>⚡ Update Scores</h3>
+        <h3>Update Scores</h3>
         <div id="statusMessage" class="status"></div>
         
         <div>
@@ -440,9 +440,9 @@
               value="1"
             />
           </div>
-          <button id="addScoreBtn" class="update-btn">➕ Add</button>
-          <button id="subtractScoreBtn" class="update-btn">➖ Subtract</button>
-          <button id="setScoreBtn" class="update-btn">🎯 Set Score</button>
+          <button id="addScoreBtn" class="update-btn">Add</button>
+          <button id="subtractScoreBtn" class="update-btn">Subtract</button>
+          <button id="setScoreBtn" class="update-btn">Set Score</button>
         </div>
       </div>
     </div>
