@@ -38,6 +38,10 @@ function addNewPlayerEntry() {
   input.placeholder = "Enter player name...";
   input.autocomplete = "off";
 
+  // Create buttons container
+  const buttonsDiv = document.createElement("div");
+  buttonsDiv.className = "new-player-buttons";
+
   // Create Add button
   const addBtn = document.createElement("button");
   addBtn.className = "new-player-add-btn";
@@ -60,12 +64,19 @@ function addNewPlayerEntry() {
       });
 
       if (resp.ok) {
-        // Remove the new entry and reload all players
-        newEntry.remove();
-        addingNewPlayer = false;
-        loadGamePlayers();
+        const data = await resp.json();
+        if (data.ok) {
+          // Remove the new entry and reload all players
+          newEntry.remove();
+          addingNewPlayer = false;
+          loadGamePlayers();
+        } else {
+          alert(data.error || "Failed to add player");
+          addBtn.disabled = false;
+        }
       } else {
-        alert("Failed to add player");
+        const data = await resp.json();
+        alert(data.error || "Failed to add player");
         addBtn.disabled = false;
       }
     } catch (e) {
@@ -75,8 +86,20 @@ function addNewPlayerEntry() {
     }
   });
 
+  // Create Cancel button
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "new-player-cancel-btn";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => {
+    newEntry.remove();
+    addingNewPlayer = false;
+  });
+
+  buttonsDiv.appendChild(addBtn);
+  buttonsDiv.appendChild(cancelBtn);
+
   newEntry.appendChild(input);
-  newEntry.appendChild(addBtn);
+  newEntry.appendChild(buttonsDiv);
   container.appendChild(newEntry);
   
   // Focus on the input
@@ -110,6 +133,22 @@ async function loadGamePlayers() {
     allPlayers = await resp.json();
     container.innerHTML = "";
 
+    // Update game title in header
+    if (allPlayers.length > 0 || true) {
+      try {
+        const gameResp = await fetch("/getGameName");
+        if (gameResp.ok) {
+          const gameData = await gameResp.json();
+          const titleEl = document.getElementById("gameTitle");
+          if (titleEl) {
+            titleEl.textContent = gameData.name || "Game";
+          }
+        }
+      } catch (e) {
+        // Silently fail - use default title
+      }
+    }
+
     if (allPlayers.length === 0) {
       if (emptyStateEl) emptyStateEl.style.display = "block";
       return;
@@ -128,7 +167,7 @@ async function loadGamePlayers() {
       // Subtract button (outside, left)
       const subtractBtn = document.createElement("button");
       subtractBtn.className = "player-btn";
-      subtractBtn.textContent = "−";
+      subtractBtn.textContent = "-";
       subtractBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         updatePlayerScoreDirect(playerName, -1);

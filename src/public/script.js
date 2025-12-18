@@ -125,10 +125,8 @@ async function loadManagePlayers() {
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("nameForm")) {
     loadManagePlayers();
-  } else if (window.location.pathname === "/game") {
-    if (typeof loadGamePlayers === "function") loadGamePlayers();
   }
-  // Note: home page no longer loads players list
+  // Note: /game page players are loaded by game.js
 });
 
 

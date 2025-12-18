@@ -32,7 +32,7 @@
       color: white;
       padding: 40px 30px;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
     }
 
@@ -40,6 +40,7 @@
       font-size: 2.5em;
       margin-bottom: 0;
       font-weight: 700;
+      text-align: center;
     }
 
     .header-btn {
@@ -344,6 +345,12 @@
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
+    .new-player-buttons {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
     .new-player-add-btn {
       padding: 8px 16px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -352,7 +359,6 @@
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
-      flex-shrink: 0;
       transition: all 0.3s ease;
     }
 
@@ -364,6 +370,22 @@
     .new-player-add-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    .new-player-cancel-btn {
+      padding: 8px 16px;
+      background: #f0f0f0;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .new-player-cancel-btn:hover {
+      background: #e0e0e0;
+      transform: translateY(-2px);
     }
 
     @media (max-width: 600px) {
@@ -400,7 +422,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>Game</h1>
+      <h1 id="gameTitle">Game</h1>
     </header>
 
     <div class="controls">
@@ -410,7 +432,7 @@
     </div>
 
     <div class="content">
-      <h2>Players in Game</h2>
+      <h2>Players</h2>
       <div id="playersList" class="players-grid"></div>
       <div id="emptyState" class="empty-state" style="display: none;">
         <div class="empty-state-icon">List Empty</div>

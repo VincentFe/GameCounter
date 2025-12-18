@@ -51,6 +51,12 @@ export function saveName(
     (async () => {
       try {
         const game = getGame();
+        // Check if player already exists
+        if (game.findPlayerIndexByName(name) !== -1) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ ok: false, error: "Player already exists" }));
+          return;
+        }
         game.addPlayer(new Player(name));
         await saveGame(baseDir);
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -377,6 +383,12 @@ export function addPlayer(
 
     try {
       const game = getGame();
+      // Check if player already exists
+      if (game.findPlayerIndexByName(name) !== -1) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ ok: false, error: "Player already exists" }));
+        return;
+      }
       game.addPlayer(new Player(name));
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
@@ -409,4 +421,15 @@ export function markGameInactive(
       res.end(JSON.stringify({ ok: false, error: "Failed to mark game inactive" }));
     }
   })();
+}
+
+export function getGameName(res: ServerResponse): void {
+  try {
+    const game = getGame();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ name: game.getGameName() }));
+  } catch (err) {
+    res.writeHead(500);
+    res.end(JSON.stringify({ ok: false, error: "Failed to get game name" }));
+  }
 }

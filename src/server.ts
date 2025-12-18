@@ -18,6 +18,7 @@ import {
   saveGameInstance,
   addPlayer,
   markGameInactive,
+  getGameName,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
@@ -83,6 +84,10 @@ const server = http.createServer(
 
     if (method === "GET" && url === "/listGames") {
       return listGames(res, __dirname);
+    }
+
+    if (method === "GET" && url === "/getGameName") {
+      return getGameName(res);
     }
 
     if (method === "POST" && url === "/saveGame") {

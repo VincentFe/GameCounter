@@ -11,4 +11,5 @@ export declare function listGames(res: ServerResponse, baseDir: string): void;
 export declare function saveGameInstance(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function addPlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function markGameInactive(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
+export declare function getGameName(res: ServerResponse): void;
 //# sourceMappingURL=enterNames.d.ts.map
