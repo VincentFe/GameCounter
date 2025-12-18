@@ -1,6 +1,124 @@
 // Game Page Logic
 let selectedPlayers = new Set();
 let allPlayers = [];
+let addingNewPlayer = false;
+
+async function saveGame() {
+  try {
+    const resp = await fetch("/saveGame", { method: "POST" });
+    if (resp.ok) {
+      window.location.href = "/";
+    } else {
+      alert("Failed to save game");
+    }
+  } catch (e) {
+    console.error("Error saving game:", e);
+    alert("Error saving game");
+  }
+}
+
+function addNewPlayerEntry() {
+  if (addingNewPlayer) {
+    alert("Please finish adding the current player first.");
+    return;
+  }
+
+  addingNewPlayer = true;
+  const container = document.getElementById("playersList");
+  
+  // Create new player entry container with white background
+  const newEntry = document.createElement("div");
+  newEntry.className = "new-player-entry";
+  newEntry.id = "newPlayerEntry";
+
+  // Create input for player name
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "new-player-input";
+  input.placeholder = "Enter player name...";
+  input.autocomplete = "off";
+
+  // Create buttons container
+  const buttonsDiv = document.createElement("div");
+  buttonsDiv.className = "new-player-buttons";
+
+  // Create Add button
+  const addBtn = document.createElement("button");
+  addBtn.className = "new-player-add-btn";
+  addBtn.textContent = "Add";
+  addBtn.addEventListener("click", async () => {
+    const playerName = input.value.trim();
+    if (!playerName) {
+      alert("Please enter a player name.");
+      input.focus();
+      return;
+    }
+
+    addBtn.disabled = true;
+
+    try {
+      const resp = await fetch("/addPlayer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: playerName }),
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.ok) {
+          // Remove the new entry and reload all players
+          newEntry.remove();
+          addingNewPlayer = false;
+          loadGamePlayers();
+        } else {
+          alert(data.error || "Failed to add player");
+          addBtn.disabled = false;
+        }
+      } else {
+        const data = await resp.json();
+        alert(data.error || "Failed to add player");
+        addBtn.disabled = false;
+      }
+    } catch (e) {
+      console.error("Error adding player:", e);
+      alert("Error adding player");
+      addBtn.disabled = false;
+    }
+  });
+
+  // Create Cancel button
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "new-player-cancel-btn";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => {
+    newEntry.remove();
+    addingNewPlayer = false;
+  });
+
+  buttonsDiv.appendChild(addBtn);
+  buttonsDiv.appendChild(cancelBtn);
+
+  newEntry.appendChild(input);
+  newEntry.appendChild(buttonsDiv);
+  container.appendChild(newEntry);
+  
+  // Focus on the input
+  input.focus();
+}
+
+async function endGame() {
+  try {
+    const resp = await fetch("/markGameInactive", { method: "POST" });
+    if (resp.ok) {
+      window.location.href = "/leaderboard";
+    } else {
+      alert("Failed to end game");
+    }
+  } catch (e) {
+    console.error("Error ending game:", e);
+    alert("Error ending game");
+  }
+}
 
 async function loadGamePlayers() {
   const container = document.getElementById("playersList");
@@ -15,6 +133,22 @@ async function loadGamePlayers() {
     allPlayers = await resp.json();
     container.innerHTML = "";
 
+    // Update game title in header
+    if (allPlayers.length > 0 || true) {
+      try {
+        const gameResp = await fetch("/getGameName");
+        if (gameResp.ok) {
+          const gameData = await gameResp.json();
+          const titleEl = document.getElementById("gameTitle");
+          if (titleEl) {
+            titleEl.textContent = gameData.name || "Game";
+          }
+        }
+      } catch (e) {
+        // Silently fail - use default title
+      }
+    }
+
     if (allPlayers.length === 0) {
       if (emptyStateEl) emptyStateEl.style.display = "block";
       return;
@@ -26,6 +160,21 @@ async function loadGamePlayers() {
       const playerName = typeof player === "string" ? player : player.name;
       const playerScore = typeof player === "object" ? player.score : 0;
 
+      // Create row container
+      const row = document.createElement("div");
+      row.className = "player-row";
+
+      // Subtract button (outside, left)
+      const subtractBtn = document.createElement("button");
+      subtractBtn.className = "player-btn";
+      subtractBtn.textContent = "-";
+      subtractBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, -1);
+      });
+      row.appendChild(subtractBtn);
+
+      // Player card
       const card = document.createElement("div");
       card.className = "player-card";
       card.dataset.name = playerName;
@@ -33,19 +182,10 @@ async function loadGamePlayers() {
       const header = document.createElement("div");
       header.className = "player-header";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = "player-checkbox";
-      checkbox.addEventListener("change", (e) => {
-        e.stopPropagation();
-        togglePlayer(playerName, checkbox.checked);
-      });
-
       const nameDiv = document.createElement("div");
       nameDiv.className = "player-name";
       nameDiv.textContent = playerName;
 
-      header.appendChild(checkbox);
       header.appendChild(nameDiv);
 
       const scoreDiv = document.createElement("div");
@@ -57,11 +197,23 @@ async function loadGamePlayers() {
 
       // Click card to select/deselect
       card.addEventListener("click", () => {
-        checkbox.checked = !checkbox.checked;
-        togglePlayer(playerName, checkbox.checked);
+        const isCurrentlySelected = selectedPlayers.has(playerName);
+        togglePlayer(playerName, !isCurrentlySelected);
       });
 
-      container.appendChild(card);
+      row.appendChild(card);
+
+      // Add button (outside, right)
+      const addBtn = document.createElement("button");
+      addBtn.className = "player-btn";
+      addBtn.textContent = "+";
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, 1);
+      });
+      row.appendChild(addBtn);
+
+      container.appendChild(row);
     });
 
     updateScoreUpdateSection();
@@ -112,6 +264,27 @@ function updateScoreUpdateSection() {
   const section = document.getElementById("scoreUpdateSection");
   if (section) {
     section.style.display = selectedPlayers.size > 0 ? "block" : "none";
+  }
+}
+
+async function updatePlayerScoreDirect(playerName, points) {
+  try {
+    const resp = await fetch("/updateScore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: playerName, score: points }),
+    });
+
+    if (resp.ok) {
+      loadGamePlayers();
+    } else {
+      const errorData = await resp.json();
+      console.error("Score update failed:", errorData);
+      alert("Failed to update score");
+    }
+  } catch (e) {
+    console.error("Error updating score:", e);
+    alert("Error updating score");
   }
 }
 
@@ -227,16 +400,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const addPlayerBtn = document.getElementById("addPlayerBtn");
   if (addPlayerBtn) {
-    addPlayerBtn.addEventListener("click", () => {
-      window.location.href = "/enterNames";
-    });
+    addPlayerBtn.addEventListener("click", addNewPlayerEntry);
   }
 
-  const backBtn = document.getElementById("backBtn");
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      window.location.href = "/";
-    });
+  const saveGameBtn = document.getElementById("saveGameBtn");
+  if (saveGameBtn) {
+    saveGameBtn.addEventListener("click", saveGame);
   }
 
   const addScoreBtn = document.getElementById("addScoreBtn");

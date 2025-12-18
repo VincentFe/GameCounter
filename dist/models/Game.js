@@ -2,8 +2,10 @@ import fs from "fs/promises";
 import path from "path";
 import Player from "./Player.js";
 export class Game {
-    constructor(players = []) {
+    constructor(players = [], name = "Default Game", active = true) {
         this.players = players;
+        this.name = name;
+        this.active = active;
     }
     addPlayer(player) {
         const p = player instanceof Player ? player : new Player(player);
@@ -39,11 +41,17 @@ export class Game {
         return true;
     }
     toJSON() {
-        return { players: this.players.map((p) => p.toJSON()) };
+        return {
+            name: this.name,
+            players: this.players.map((p) => p.toJSON()),
+            active: this.active,
+        };
     }
     static fromJSON(obj) {
         const players = (obj?.players || []).map(Player.fromJSON);
-        return new Game(players);
+        const name = obj?.name || "Default Game";
+        const active = typeof obj?.active === "boolean" ? obj.active : true;
+        return new Game(players, name, active);
     }
     toPlainNames() {
         return this.players.map((p) => p.name);
@@ -51,31 +59,26 @@ export class Game {
     toPlayersWithScores() {
         return this.players.map((p) => ({ name: p.name, score: p.getScore() }));
     }
-    static async loadFromFile(baseDir) {
-        const filePath = path.join(baseDir, "..", "db", "names.txt");
-        try {
-            const data = await fs.readFile(filePath, "utf8");
-            const players = data
-                ? data
-                    .split("\\n")
-                    .map((x) => x.trim())
-                    .filter(Boolean)
-                    .map((n) => new Player(n))
-                : [];
-            return new Game(players);
-        }
-        catch (e) {
-            return new Game();
-        }
+    getGameName() {
+        return this.name;
+    }
+    setName(name) {
+        this.name = name;
+    }
+    setActive(active) {
+        this.active = active;
+    }
+    isActive() {
+        return this.active;
     }
     async saveToFile(baseDir) {
         const dbDir = path.join(baseDir, "..", "db");
-        const filePath = path.join(dbDir, "names.txt");
-        const toWrite = this.players.length
-            ? this.toPlainNames().join("\n") + "\n"
-            : "";
+        // Sanitize filename: remove invalid characters
+        const safeName = this.name.replace(/[<>:"|?*\\\/]/g, "_").trim();
+        const filename = safeName || "game";
+        const filePath = path.join(dbDir, `${filename}.json`);
         await fs.mkdir(dbDir, { recursive: true });
-        await fs.writeFile(filePath, toWrite, "utf8");
+        await fs.writeFile(filePath, JSON.stringify(this.toJSON(), null, 2), "utf8");
     }
 }
 export default Game;

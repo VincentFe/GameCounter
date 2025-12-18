@@ -1,7 +1,9 @@
 import Player from "./Player.js";
 export declare class Game {
     private players;
-    constructor(players?: Player[]);
+    private name;
+    private active;
+    constructor(players?: Player[], name?: string, active?: boolean);
     addPlayer(player: Player | string): void;
     updatePlayerScore(name: string, score: number): void;
     setPlayerScore(name: string, score: number): void;
@@ -10,12 +12,17 @@ export declare class Game {
     findPlayerIndexByName(name: string): number;
     removePlayerByName(name: string): boolean;
     toJSON(): {
+        name: string;
         players: any[];
+        active: boolean;
     };
     static fromJSON(obj: any): Game;
     toPlainNames(): string[];
     toPlayersWithScores(): any[];
-    static loadFromFile(baseDir: string): Promise<Game>;
+    getGameName(): string;
+    setName(name: string): void;
+    setActive(active: boolean): void;
+    isActive(): boolean;
     saveToFile(baseDir: string): Promise<void>;
 }
 export default Game;

@@ -1,0 +1,10 @@
+{
+  "name": "name",
+  "players": [
+    {
+      "name": "testname",
+      "score": 3
+    }
+  ],
+  "active": false
+}

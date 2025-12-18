@@ -1,0 +1,13 @@
+{
+  "name": "Unnamed Game",
+  "players": [
+    {
+      "name": "test",
+      "score": 2
+    },
+    {
+      "name": "tested",
+      "score": 4
+    }
+  ]
+}
