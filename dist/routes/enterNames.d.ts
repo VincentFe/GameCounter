@@ -9,4 +9,5 @@ export declare function updatePlayerScore(req: IncomingMessage, res: ServerRespo
 export declare function setPlayerScore(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function listGames(res: ServerResponse, baseDir: string): void;
 export declare function saveGameInstance(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
+export declare function addPlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 //# sourceMappingURL=enterNames.d.ts.map

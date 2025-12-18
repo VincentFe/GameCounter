@@ -1,6 +1,7 @@
 // Game Page Logic
 let selectedPlayers = new Set();
 let allPlayers = [];
+let addingNewPlayer = false;
 
 async function saveGame() {
   try {
@@ -14,6 +15,72 @@ async function saveGame() {
     console.error("Error saving game:", e);
     alert("Error saving game");
   }
+}
+
+function addNewPlayerEntry() {
+  if (addingNewPlayer) {
+    alert("Please finish adding the current player first.");
+    return;
+  }
+
+  addingNewPlayer = true;
+  const container = document.getElementById("playersList");
+  
+  // Create new player entry container with white background
+  const newEntry = document.createElement("div");
+  newEntry.className = "new-player-entry";
+  newEntry.id = "newPlayerEntry";
+
+  // Create input for player name
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "new-player-input";
+  input.placeholder = "Enter player name...";
+  input.autocomplete = "off";
+
+  // Create Add button
+  const addBtn = document.createElement("button");
+  addBtn.className = "new-player-add-btn";
+  addBtn.textContent = "Add";
+  addBtn.addEventListener("click", async () => {
+    const playerName = input.value.trim();
+    if (!playerName) {
+      alert("Please enter a player name.");
+      input.focus();
+      return;
+    }
+
+    addBtn.disabled = true;
+
+    try {
+      const resp = await fetch("/addPlayer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: playerName }),
+      });
+
+      if (resp.ok) {
+        // Remove the new entry and reload all players
+        newEntry.remove();
+        addingNewPlayer = false;
+        loadGamePlayers();
+      } else {
+        alert("Failed to add player");
+        addBtn.disabled = false;
+      }
+    } catch (e) {
+      console.error("Error adding player:", e);
+      alert("Error adding player");
+      addBtn.disabled = false;
+    }
+  });
+
+  newEntry.appendChild(input);
+  newEntry.appendChild(addBtn);
+  container.appendChild(newEntry);
+  
+  // Focus on the input
+  input.focus();
 }
 
 async function endGame() {
@@ -294,9 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const addPlayerBtn = document.getElementById("addPlayerBtn");
   if (addPlayerBtn) {
-    addPlayerBtn.addEventListener("click", () => {
-      window.location.href = "/enterNames";
-    });
+    addPlayerBtn.addEventListener("click", addNewPlayerEntry);
   }
 
   const saveGameBtn = document.getElementById("saveGameBtn");

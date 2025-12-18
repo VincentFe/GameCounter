@@ -317,6 +317,55 @@
       font-size: 0.95em;
     }
 
+    .new-player-entry {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .new-player-input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .new-player-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .new-player-add-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .new-player-add-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .new-player-add-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     @media (max-width: 600px) {
       header h1 {
         font-size: 1.8em;
@@ -352,14 +401,12 @@
   <div class="container">
     <header>
       <h1>🎮 Game</h1>
-      <div style="display: flex; gap: 10px;">
-        <button id="saveGameBtn" class="header-btn">💾 Save Game</button>
-        <button class="header-btn" onclick="endGame()">🏁 End Game</button>
-      </div>
     </header>
 
     <div class="controls">
       <button id="addPlayerBtn" class="btn btn-primary">➕ Add Player</button>
+      <button id="saveGameBtn" class="btn btn-secondary">💾 Save Game</button>
+      <button class="btn btn-secondary" onclick="endGame()">🏁 End Game</button>
     </div>
 
     <div class="content">

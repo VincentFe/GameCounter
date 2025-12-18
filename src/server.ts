@@ -16,6 +16,7 @@ import {
   getPlayerNames,
   listGames,
   saveGameInstance,
+  addPlayer,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
@@ -85,6 +86,10 @@ const server = http.createServer(
 
     if (method === "POST" && url === "/saveGame") {
       return saveGameInstance(req, res, __dirname);
+    }
+
+    if (method === "POST" && url === "/addPlayer") {
+      return addPlayer(req, res, __dirname);
     }
 
     //
