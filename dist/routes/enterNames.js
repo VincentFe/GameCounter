@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { getGame, saveGame } from "../gameManager.js";
 import Player from "../models/Player.js";
-export function renderEnterNames(res, baseDir) {
+export function renderEnterNames(res, baseDir, initialPlayers) {
     const file = path.join(baseDir, "..", "src", "public", "enterNames.html");
     fs.readFile(file, (err, data) => {
         if (err) {
@@ -10,8 +10,15 @@ export function renderEnterNames(res, baseDir) {
             res.end("Error loading enter names page");
             return;
         }
+        let html = data.toString();
+        // Inject initial players data as JSON in the HTML
+        if (initialPlayers && initialPlayers.length > 0) {
+            const playersJson = JSON.stringify(initialPlayers);
+            const script = `<script>window.__initialPlayers = ${playersJson};</script>`;
+            html = html.replace("</head>", `${script}</head>`);
+        }
         res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(data);
+        res.end(html);
     });
 }
 export function saveName(req, res, baseDir) {
@@ -178,6 +185,21 @@ export function deletePlayer(req, res, baseDir) {
         res.writeHead(500);
         res.end(JSON.stringify({ ok: false, error: "Request error" }));
     });
+}
+export function removeAllPlayers(req, res, baseDir) {
+    (async () => {
+        try {
+            const game = getGame();
+            game.removeAllPlayers();
+            await saveGame(baseDir);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true }));
+        }
+        catch (err) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ ok: false, error: "Failed to remove all players" }));
+        }
+    })();
 }
 export function updatePlayerScore(req, res, baseDir) {
     let body = "";

@@ -52,6 +52,10 @@ export class Game {
     return true;
   }
 
+  removeAllPlayers(): void {
+    this.players = [];
+  }
+
   toJSON(): { name: string; players: any[]; active: boolean } {
     return {
       name: this.name,

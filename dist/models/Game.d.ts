@@ -11,6 +11,7 @@ export declare class Game {
     getPlayers(): Player[];
     findPlayerIndexByName(name: string): number;
     removePlayerByName(name: string): boolean;
+    removeAllPlayers(): void;
     toJSON(): {
         name: string;
         players: any[];

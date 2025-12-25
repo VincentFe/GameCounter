@@ -207,8 +207,8 @@ export function renderLeaderboard(res: ServerResponse, baseDir: string): void {
           </div>
 
           <div class="buttons">
-            <button class="btn btn-secondary" onclick="goHome()">🏠 Back Home</button>
-            <button class="btn btn-primary" onclick="newGame()">🆕 New Game</button>
+            <button class="btn btn-secondary" onclick="goHome()">Back Home</button>
+            <button class="btn btn-primary" onclick="newGame()">New Game</button>
           </div>
         </div>
       </div>
@@ -283,8 +283,26 @@ export function renderLeaderboard(res: ServerResponse, baseDir: string): void {
           window.location.href = "/";
         }
 
-        function newGame() {
-          window.location.href = "/";
+        async function newGame() {
+          try {
+            // Fetch current players from leaderboard
+            const resp = await fetch("/api/leaderboard");
+            if (!resp.ok) {
+              window.location.href = "/";
+              return;
+            }
+            
+            const players = await resp.json();
+            // Reset scores to 0 for each player
+            const resetPlayers = players.map(p => ({ name: p.name, score: 0 }));
+            
+            // Store players in sessionStorage to pass to enterNames page
+            sessionStorage.setItem("__initialPlayers", JSON.stringify(resetPlayers));
+            window.location.href = "/enterNames";
+          } catch (e) {
+            console.error("Error in newGame:", e);
+            window.location.href = "/";
+          }
         }
 
         loadLeaderboard();
