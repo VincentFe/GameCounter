@@ -40,6 +40,9 @@ export class Game {
         this.players.splice(idx, 1);
         return true;
     }
+    removeAllPlayers() {
+        this.players = [];
+    }
     toJSON() {
         return {
             name: this.name,

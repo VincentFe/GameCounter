@@ -19,6 +19,7 @@ import {
   addPlayer,
   markGameInactive,
   getGameName,
+  removeAllPlayers,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
@@ -64,6 +65,10 @@ const server = http.createServer(
 
     if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {
       return deletePlayer(req, res, __dirname);
+    }
+
+    if (method === "POST" && url === "/removeAllPlayers") {
+      return removeAllPlayers(req, res, __dirname);
     }
 
     if (method === "POST" && url === "/updateScore") {

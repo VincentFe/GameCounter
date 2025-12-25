@@ -170,6 +170,45 @@
       padding-top: 20px;
     }
 
+    .players-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .players-header h2 {
+      margin: 30px 0 20px 0;
+      border-top: 2px solid #eee;
+      padding-top: 20px;
+      flex: 1;
+    }
+
+    .btn-remove-all {
+      padding: 8px 16px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      height: fit-content;
+      margin-top: 20px;
+    }
+
+    .btn-remove-all:hover {
+      background: #ff5252;
+      transform: translateY(-1px);
+    }
+
+    .btn-remove-all:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .players-list {
       list-style: none;
     }
@@ -297,13 +336,122 @@
         <div id="status" class="status" role="alert"></div>
       </form>
 
-      <h2>Players List</h2>
+      <div class="players-header">
+        <h2>Players List</h2>
+        <button type="button" id="removeAllBtn" class="btn-remove-all" style="display: none;">
+          Remove All
+        </button>
+      </div>
       <ul id="playerList" class="players-list"></ul>
       <div id="emptyState" class="empty-state" style="display: none;">
         No players added yet. Enter a name above to get started!
       </div>
     </div>
   </div>
+
+  <script>
+    // Initialize players from sessionStorage (passed from leaderboard)
+    async function initializePlayersFromSession() {
+      const playersJson = sessionStorage.getItem("__initialPlayers");
+      if (playersJson) {
+        try {
+          const players = JSON.parse(playersJson);
+          // Add each player to the current game
+          for (const player of players) {
+            try {
+              const resp = await fetch("/saveName", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: player.name }),
+              });
+              if (!resp.ok) {
+                console.warn(`Failed to add player ${player.name}`);
+              }
+            } catch (err) {
+              console.warn(`Error adding player ${player.name}:`, err);
+            }
+          }
+          // Clear sessionStorage after use
+          sessionStorage.removeItem("__initialPlayers");
+          // Reload the player list display
+          if (typeof loadManagePlayers === "function") {
+            loadManagePlayers();
+          }
+        } catch (err) {
+          console.error("Failed to parse initial players:", err);
+        }
+      }
+    }
+
+    // Function to remove all players
+    async function removeAllPlayers() {
+      if (!confirm("Are you sure you want to remove all players?")) {
+        return;
+      }
+      
+      const removeAllBtn = document.getElementById("removeAllBtn");
+      if (removeAllBtn) {
+        removeAllBtn.disabled = true;
+      }
+
+      try {
+        const resp = await fetch("/removeAllPlayers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          // Reload the player list
+          if (typeof loadManagePlayers === "function") {
+            loadManagePlayers();
+          }
+        } else {
+          alert("Failed to remove all players: " + (data?.error || resp.statusText));
+        }
+      } catch (err) {
+        alert("Error removing all players: " + err.message);
+      } finally {
+        if (removeAllBtn) {
+          removeAllBtn.disabled = false;
+        }
+      }
+    }
+
+    // Setup remove all button and show it only when there are players
+    function updateRemoveAllButtonVisibility() {
+      const removeAllBtn = document.getElementById("removeAllBtn");
+      const playerList = document.getElementById("playerList");
+      if (removeAllBtn) {
+        removeAllBtn.style.display = playerList && playerList.children.length > 0 ? "block" : "none";
+      }
+    }
+
+    // Observe changes to player list and update button visibility
+    const observer = new MutationObserver(() => {
+      updateRemoveAllButtonVisibility();
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const removeAllBtn = document.getElementById("removeAllBtn");
+      if (removeAllBtn) {
+        removeAllBtn.addEventListener("click", removeAllPlayers);
+      }
+      
+      const playerList = document.getElementById("playerList");
+      if (playerList) {
+        observer.observe(playerList, { childList: true });
+      }
+
+      // Call after DOM is ready
+      initializePlayersFromSession();
+      updateRemoveAllButtonVisibility();
+    });
+
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState !== "loading") {
+      initializePlayersFromSession();
+    }
+  </script>
 
   <script src="/public/script.js"></script>
 </body>
