@@ -133,6 +133,18 @@ async function loadGamePlayers() {
     allPlayers = await resp.json();
     container.innerHTML = "";
 
+    // Fetch game type
+    let gameType = "quiz"; // default
+    try {
+      const typeResp = await fetch("/getGameType");
+      if (typeResp.ok) {
+        const typeData = await typeResp.json();
+        gameType = typeData.type || "quiz";
+      }
+    } catch (e) {
+      // Use default game type
+    }
+
     // Update game title in header
     if (allPlayers.length > 0 || true) {
       try {
@@ -164,15 +176,17 @@ async function loadGamePlayers() {
       const row = document.createElement("div");
       row.className = "player-row";
 
-      // Subtract button (outside, left)
-      const subtractBtn = document.createElement("button");
-      subtractBtn.className = "player-btn";
-      subtractBtn.textContent = "-";
-      subtractBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        updatePlayerScoreDirect(playerName, -1);
-      });
-      row.appendChild(subtractBtn);
+      // Subtract button (outside, left) - only for quiz mode
+      if (gameType === "quiz") {
+        const subtractBtn = document.createElement("button");
+        subtractBtn.className = "player-btn";
+        subtractBtn.textContent = "-";
+        subtractBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          updatePlayerScoreDirect(playerName, -1);
+        });
+        row.appendChild(subtractBtn);
+      }
 
       // Player card
       const card = document.createElement("div");
@@ -195,28 +209,68 @@ async function loadGamePlayers() {
       header.appendChild(scoreDiv);
       card.appendChild(header);
 
-      // Click card to select/deselect
-      card.addEventListener("click", () => {
-        const isCurrentlySelected = selectedPlayers.has(playerName);
-        togglePlayer(playerName, !isCurrentlySelected);
-      });
+      // Click card to select/deselect - only for quiz mode
+      if (gameType === "quiz") {
+        card.addEventListener("click", () => {
+          const isCurrentlySelected = selectedPlayers.has(playerName);
+          togglePlayer(playerName, !isCurrentlySelected);
+        });
+      }
 
       row.appendChild(card);
 
-      // Add button (outside, right)
-      const addBtn = document.createElement("button");
-      addBtn.className = "player-btn";
-      addBtn.textContent = "+";
-      addBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        updatePlayerScoreDirect(playerName, 1);
-      });
-      row.appendChild(addBtn);
+      // Add button or Chinees Poepeke controls
+      if (gameType === "quiz") {
+        const addBtn = document.createElement("button");
+        addBtn.className = "player-btn";
+        addBtn.textContent = "+";
+        addBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          updatePlayerScoreDirect(playerName, 1);
+        });
+        row.appendChild(addBtn);
+      } else if (gameType === "chinees poepeke") {
+        // Chinees Poepeke mode: add input field and buttons
+        const actions = document.createElement("div");
+        actions.className = "chinees-actions";
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.className = "chinees-input";
+        input.placeholder = "0";
+        input.min = "0";
+        input.value = "0";
+
+        const gehaalBtn = document.createElement("button");
+        gehaalBtn.className = "chinees-btn chinees-btn-gehaald";
+        gehaalBtn.textContent = "Gehaald";
+        gehaalBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          // Logic will be added later
+          console.log(`${playerName} - Gehaald with value: ${input.value}`);
+        });
+
+        const gefaaldBtn = document.createElement("button");
+        gefaaldBtn.className = "chinees-btn chinees-btn-gefaald";
+        gefaaldBtn.textContent = "Gefaald";
+        gefaaldBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          // Logic will be added later
+          console.log(`${playerName} - Gefaald with value: ${input.value}`);
+        });
+
+        actions.appendChild(input);
+        actions.appendChild(gehaalBtn);
+        actions.appendChild(gefaaldBtn);
+        row.appendChild(actions);
+      }
 
       container.appendChild(row);
     });
 
-    updateScoreUpdateSection();
+    if (gameType === "quiz") {
+      updateScoreUpdateSection();
+    }
   } catch (e) {
     console.error("Error loading game players:", e);
   }

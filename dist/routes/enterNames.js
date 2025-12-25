@@ -105,6 +105,43 @@ export function setGameName(req, res, baseDir) {
         res.end(JSON.stringify({ ok: false, error: "Request error" }));
     });
 }
+export function setGameType(req, res, baseDir) {
+    let body = "";
+    req.on("data", (chunk) => {
+        body += chunk.toString();
+    });
+    req.on("end", () => {
+        let type = "";
+        try {
+            const parsed = JSON.parse(body || "{}");
+            type = (parsed.type || "").toString().trim();
+        }
+        catch (e) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
+            return;
+        }
+        if (!type || (type !== "quiz" && type !== "chinees poepeke")) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ ok: false, error: "Invalid game type" }));
+            return;
+        }
+        try {
+            const game = getGame();
+            game.setGameType(type);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true }));
+        }
+        catch (err) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ ok: false, error: "Failed to set game type" }));
+        }
+    });
+    req.on("error", () => {
+        res.writeHead(500);
+        res.end(JSON.stringify({ ok: false, error: "Request error" }));
+    });
+}
 export function getPlayers(res, baseDir) {
     if (res.headersSent)
         return;
@@ -396,6 +433,17 @@ export function getGameName(res) {
     catch (err) {
         res.writeHead(500);
         res.end(JSON.stringify({ ok: false, error: "Failed to get game name" }));
+    }
+}
+export function getGameType(res) {
+    try {
+        const game = getGame();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ type: game.getGameType() }));
+    }
+    catch (err) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ ok: false, error: "Failed to get game type" }));
     }
 }
 //# sourceMappingURL=enterNames.js.map

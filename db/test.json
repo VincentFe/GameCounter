@@ -1,0 +1,11 @@
+{
+  "name": "test",
+  "players": [
+    {
+      "name": "test",
+      "score": 3
+    }
+  ],
+  "active": false,
+  "gameType": "quiz"
+}

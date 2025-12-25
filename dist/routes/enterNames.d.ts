@@ -5,6 +5,7 @@ export declare function renderEnterNames(res: ServerResponse, baseDir: string, i
 }>): void;
 export declare function saveName(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function setGameName(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
+export declare function setGameType(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function getPlayers(res: ServerResponse, baseDir: string): void;
 export declare function getPlayerNames(res: ServerResponse, baseDir: string): void;
 export declare function deletePlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
@@ -16,4 +17,5 @@ export declare function saveGameInstance(req: IncomingMessage, res: ServerRespon
 export declare function addPlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function markGameInactive(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function getGameName(res: ServerResponse): void;
+export declare function getGameType(res: ServerResponse): void;
 //# sourceMappingURL=enterNames.d.ts.map

@@ -2,15 +2,27 @@ import fs from "fs/promises";
 import path from "path";
 import Player from "./Player.js";
 
+export enum GameType {
+  QUIZ = "quiz",
+  CHINEES_POEPEKE = "chinees poepeke",
+}
+
 export class Game {
   private players: Player[];
   private name: string;
   private active: boolean;
+  private gameType: GameType;
 
-  constructor(players: Player[] = [], name: string = "Default Game", active: boolean = true) {
+  constructor(
+    players: Player[] = [],
+    name: string = "Default Game",
+    active: boolean = true,
+    gameType: GameType = GameType.QUIZ
+  ) {
     this.players = players;
     this.name = name;
     this.active = active;
+    this.gameType = gameType;
   }
 
   addPlayer(player: Player | string): void {
@@ -56,11 +68,20 @@ export class Game {
     this.players = [];
   }
 
-  toJSON(): { name: string; players: any[]; active: boolean } {
+  getGameType(): GameType {
+    return this.gameType;
+  }
+
+  setGameType(type: GameType): void {
+    this.gameType = type;
+  }
+
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: GameType } {
     return {
       name: this.name,
       players: this.players.map((p) => p.toJSON()),
       active: this.active,
+      gameType: this.gameType,
     };
   }
 
@@ -68,7 +89,8 @@ export class Game {
     const players = (obj?.players || []).map(Player.fromJSON);
     const name = obj?.name || "Default Game";
     const active = typeof obj?.active === "boolean" ? obj.active : true;
-    return new Game(players, name, active);
+    const gameType = (obj?.gameType as GameType) || GameType.QUIZ;
+    return new Game(players, name, active, gameType);
   }
 
   toPlainNames(): string[] {

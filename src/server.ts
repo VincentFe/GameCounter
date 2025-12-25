@@ -9,6 +9,7 @@ import {
   renderEnterNames,
   saveName,
   setGameName,
+  setGameType,
   getPlayers,
   deletePlayer,
   updatePlayerScore,
@@ -19,6 +20,7 @@ import {
   addPlayer,
   markGameInactive,
   getGameName,
+  getGameType,
   removeAllPlayers,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
@@ -63,6 +65,10 @@ const server = http.createServer(
       return setGameName(req, res, __dirname);
     }
 
+    if (method === "POST" && url === "/setGameType") {
+      return setGameType(req, res, __dirname);
+    }
+
     if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {
       return deletePlayer(req, res, __dirname);
     }
@@ -93,6 +99,10 @@ const server = http.createServer(
 
     if (method === "GET" && url === "/getGameName") {
       return getGameName(res);
+    }
+
+    if (method === "GET" && url === "/getGameType") {
+      return getGameType(res);
     }
 
     if (method === "POST" && url === "/saveGame") {
