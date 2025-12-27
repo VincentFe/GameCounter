@@ -245,6 +245,18 @@ async function loadGamePlayers() {
       header.appendChild(scoreDiv);
       card.appendChild(header);
 
+      // Player history (Chinees Poepeke only)
+      const historyData = typeof player === "object" ? (player.history || []) : [];
+      const historyContainer = document.createElement("div");
+      historyContainer.className = "history-grid";
+      historyData.forEach((val) => {
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.textContent = String(val);
+        historyContainer.appendChild(item);
+      });
+      card.appendChild(historyContainer);
+
       row.appendChild(card);
 
       // Add button (right side)
@@ -369,16 +381,16 @@ async function validateRound() {
       scoreChange = -inputValue;
     }
 
-    updates.push({ playerName, scoreChange, inputElement: input });
+    updates.push({ playerName, scoreChange, inputElement: input, historyValue: inputValue });
   });
 
   // Apply all score updates
   try {
-    const promises = updates.map(({ playerName, scoreChange }) =>
+    const promises = updates.map(({ playerName, scoreChange, historyValue }) =>
       fetch("/updateScore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: playerName, score: scoreChange }),
+        body: JSON.stringify({ name: playerName, score: scoreChange, historyValue }),
       })
     );
 

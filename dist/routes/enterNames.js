@@ -246,8 +246,9 @@ export function updatePlayerScore(req, res, baseDir) {
     req.on("end", () => {
         let name = "";
         let score;
+        let parsed = {};
         try {
-            const parsed = JSON.parse(body || "{}");
+            parsed = JSON.parse(body || "{}");
             name = (parsed.name || "").toString().trim();
             score = typeof parsed.score === "number" ? parsed.score : undefined;
         }
@@ -265,6 +266,10 @@ export function updatePlayerScore(req, res, baseDir) {
             try {
                 const game = getGame();
                 game.updatePlayerScore(name, score);
+                // Optionally append a history value if provided
+                if (typeof parsed.historyValue === "number") {
+                    game.addPlayerHistory(name, parsed.historyValue);
+                }
                 await saveGame(baseDir);
                 res.writeHead(200, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({ ok: true }));

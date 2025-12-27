@@ -1,6 +1,25 @@
 {
   "name": "test",
-  "players": [],
-  "active": false,
+  "players": [
+    {
+      "name": "speler",
+      "score": 25,
+      "history": [
+        1,
+        0,
+        4
+      ]
+    },
+    {
+      "name": "splers",
+      "score": 24,
+      "history": [
+        1,
+        0,
+        15
+      ]
+    }
+  ],
+  "active": true,
   "gameType": "chinees poepeke"
 }

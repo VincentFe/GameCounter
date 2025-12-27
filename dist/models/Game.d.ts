@@ -28,6 +28,7 @@ export declare class Game {
     static fromJSON(obj: any): Game;
     toPlainNames(): string[];
     toPlayersWithScores(): any[];
+    addPlayerHistory(name: string, value: number): void;
     getGameName(): string;
     setName(name: string): void;
     setActive(active: boolean): void;

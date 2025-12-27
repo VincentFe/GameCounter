@@ -290,8 +290,9 @@ export function updatePlayerScore(
   req.on("end", () => {
     let name = "";
     let score: number | undefined;
+    let parsed: any = {};
     try {
-      const parsed = JSON.parse(body || "{}");
+      parsed = JSON.parse(body || "{}");
       name = (parsed.name || "").toString().trim();
       score = typeof parsed.score === "number" ? parsed.score : undefined;
     } catch (e) {
@@ -310,6 +311,10 @@ export function updatePlayerScore(
       try {
         const game = getGame();
         game.updatePlayerScore(name, score);
+        // Optionally append a history value if provided
+        if (typeof (parsed as any).historyValue === "number") {
+          game.addPlayerHistory(name, (parsed as any).historyValue);
+        }
         await saveGame(baseDir);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));

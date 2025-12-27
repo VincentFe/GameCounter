@@ -74,7 +74,16 @@ export class Game {
         return this.players.map((p) => p.name);
     }
     toPlayersWithScores() {
-        return this.players.map((p) => ({ name: p.name, score: p.getScore() }));
+        return this.players.map((p) => ({ name: p.name, score: p.getScore(), history: p.history || [] }));
+    }
+    addPlayerHistory(name, value) {
+        const idx = this.findPlayerIndexByName(name);
+        if (idx !== -1) {
+            const player = this.players[idx];
+            if (!Array.isArray(player.history))
+                player.history = [];
+            player.history.push(typeof value === "number" ? value : Number(value) || 0);
+        }
     }
     getGameName() {
         return this.name;
