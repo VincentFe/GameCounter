@@ -1,11 +1,6 @@
 {
   "name": "test",
-  "players": [
-    {
-      "name": "test",
-      "score": 3
-    }
-  ],
+  "players": [],
   "active": false,
-  "gameType": "quiz"
+  "gameType": "chinees poepeke"
 }

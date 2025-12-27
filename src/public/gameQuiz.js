@@ -1,9 +1,7 @@
-// Game Page Logic
+// Quiz Game Page Logic
 let selectedPlayers = new Set();
 let allPlayers = [];
 let addingNewPlayer = false;
-// Track selected buttons for chinees poepeke: { playerName: "gehaald" | "gefaald" | null }
-let chineesButtonStates = {};
 
 async function saveGame() {
   try {
@@ -128,27 +126,12 @@ async function loadGamePlayers() {
 
   if (!container) return;
 
-  // Reset chinees button states when reloading
-  chineesButtonStates = {};
-
   try {
     const resp = await fetch("/players");
     if (!resp.ok) return;
 
     allPlayers = await resp.json();
     container.innerHTML = "";
-
-    // Fetch game type
-    let gameType = "quiz"; // default
-    try {
-      const typeResp = await fetch("/getGameType");
-      if (typeResp.ok) {
-        const typeData = await typeResp.json();
-        gameType = typeData.type || "quiz";
-      }
-    } catch (e) {
-      // Use default game type
-    }
 
     // Update game title in header
     if (allPlayers.length > 0 || true) {
@@ -158,7 +141,7 @@ async function loadGamePlayers() {
           const gameData = await gameResp.json();
           const titleEl = document.getElementById("gameTitle");
           if (titleEl) {
-            titleEl.textContent = gameData.name || "Game";
+            titleEl.textContent = gameData.name || "Quiz Game";
           }
         }
       } catch (e) {
@@ -181,17 +164,15 @@ async function loadGamePlayers() {
       const row = document.createElement("div");
       row.className = "player-row";
 
-      // Subtract button (outside, left) - only for quiz mode
-      if (gameType === "quiz") {
-        const subtractBtn = document.createElement("button");
-        subtractBtn.className = "player-btn";
-        subtractBtn.textContent = "-";
-        subtractBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          updatePlayerScoreDirect(playerName, -1);
-        });
-        row.appendChild(subtractBtn);
-      }
+      // Subtract button (outside, left)
+      const subtractBtn = document.createElement("button");
+      subtractBtn.className = "player-btn";
+      subtractBtn.textContent = "-";
+      subtractBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, -1);
+      });
+      row.appendChild(subtractBtn);
 
       // Player card
       const card = document.createElement("div");
@@ -214,188 +195,34 @@ async function loadGamePlayers() {
       header.appendChild(scoreDiv);
       card.appendChild(header);
 
-      // Click card to select/deselect - only for quiz mode
-      if (gameType === "quiz") {
-        card.addEventListener("click", () => {
-          const isCurrentlySelected = selectedPlayers.has(playerName);
-          togglePlayer(playerName, !isCurrentlySelected);
-        });
-      }
+      // Click card to select/deselect
+      card.addEventListener("click", () => {
+        const isCurrentlySelected = selectedPlayers.has(playerName);
+        togglePlayer(playerName, !isCurrentlySelected);
+      });
 
       row.appendChild(card);
 
-      // Add button or Chinees Poepeke controls
-      if (gameType === "quiz") {
-        const addBtn = document.createElement("button");
-        addBtn.className = "player-btn";
-        addBtn.textContent = "+";
-        addBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          updatePlayerScoreDirect(playerName, 1);
-        });
-        row.appendChild(addBtn);
-      } else if (gameType === "chinees poepeke") {
-        // Chinees Poepeke mode: add input field and buttons
-        const actions = document.createElement("div");
-        actions.className = "chinees-actions";
-
-        // Subtract button
-        const subtractBtn = document.createElement("button");
-        subtractBtn.className = "player-btn";
-        subtractBtn.textContent = "-";
-        subtractBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          updatePlayerScoreDirect(playerName, -1);
-        });
-
-        // Gefaald button
-        const gefaaldBtn = document.createElement("button");
-        gefaaldBtn.className = "chinees-btn chinees-btn-gefaald";
-        gefaaldBtn.textContent = "Gefaald";
-        gefaaldBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          toggleChineesButton(playerName, "gefaald", gefaaldBtn, gehaalBtn);
-        });
-
-        // Input field
-        const input = document.createElement("input");
-        input.type = "number";
-        input.className = "chinees-input";
-        input.placeholder = "0";
-        input.min = "0";
-        input.value = "0";
-
-        // Gehaald button
-        const gehaalBtn = document.createElement("button");
-        gehaalBtn.className = "chinees-btn chinees-btn-gehaald";
-        gehaalBtn.textContent = "Gehaald";
-        gehaalBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          toggleChineesButton(playerName, "gehaald", gehaalBtn, gefaaldBtn);
-        });
-
-        // Add button
-        const addBtn = document.createElement("button");
-        addBtn.className = "player-btn";
-        addBtn.textContent = "+";
-        addBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          updatePlayerScoreDirect(playerName, 1);
-        });
-
-        actions.appendChild(subtractBtn);
-        actions.appendChild(gefaaldBtn);
-        actions.appendChild(input);
-        actions.appendChild(gehaalBtn);
-        actions.appendChild(addBtn);
-        row.appendChild(actions);
-      }
+      // Add button
+      const addBtn = document.createElement("button");
+      addBtn.className = "player-btn";
+      addBtn.textContent = "+";
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        updatePlayerScoreDirect(playerName, 1);
+      });
+      row.appendChild(addBtn);
 
       container.appendChild(row);
     });
 
-    if (gameType === "quiz") {
-      updateScoreUpdateSection();
-    }
-
-    // Show/hide validate round button based on game type
-    const validateBtn = document.getElementById("validateRoundBtn");
-    if (validateBtn) {
-      validateBtn.style.display = gameType === "chinees poepeke" ? "inline-block" : "none";
-    }
+    updateScoreUpdateSection();
   } catch (e) {
     console.error("Error loading game players:", e);
   }
 }
 
-function toggleChineesButton(playerName, buttonType, selectedBtn, otherBtn) {
-  const currentState = chineesButtonStates[playerName];
-  
-  if (currentState === buttonType) {
-    // Deselect if already selected
-    chineesButtonStates[playerName] = null;
-    selectedBtn.classList.remove("selected");
-  } else {
-    // Select this button and deselect the other
-    chineesButtonStates[playerName] = buttonType;
-    selectedBtn.classList.add("selected");
-    otherBtn.classList.remove("selected");
-  }
-}
-
-async function validateRound() {
-  // Check if all players have either gehaald or gefaald selected
-  for (const player of allPlayers) {
-    const playerName = typeof player === "string" ? player : player.name;
-    if (!chineesButtonStates[playerName]) {
-      alert(`Player "${playerName}" must have either Gehaald or Gefaald selected.`);
-      return;
-    }
-  }
-
-  // Get all the textbox values and process scores
-  const playerElements = document.querySelectorAll(".player-row");
-  const updates = [];
-
-  playerElements.forEach((row) => {
-    const card = row.querySelector(".player-card");
-    if (!card) return;
-
-    const playerName = card.dataset.name;
-    const buttonState = chineesButtonStates[playerName];
-    const input = row.querySelector(".chinees-input");
-    const inputValue = parseInt(input.value || "0", 10);
-
-    if (!buttonState) return;
-
-    let scoreChange = 0;
-    if (buttonState === "gehaald") {
-      scoreChange = 10 + inputValue;
-    } else if (buttonState === "gefaald") {
-      scoreChange = -inputValue;
-    }
-
-    updates.push({ playerName, scoreChange, inputElement: input });
-  });
-
-  // Apply all score updates
-  try {
-    const promises = updates.map(({ playerName, scoreChange }) =>
-      fetch("/updateScore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: playerName, score: scoreChange }),
-      })
-    );
-
-    const results = await Promise.all(promises);
-    const allOk = results.every((r) => r.ok);
-
-    if (allOk) {
-      // Reset all textboxes to 0 and deselect all buttons
-      updates.forEach(({ inputElement }) => {
-        inputElement.value = "0";
-      });
-
-      // Reset button states
-      chineesButtonStates = {};
-      const gefaaldBtns = document.querySelectorAll(".chinees-btn-gefaald");
-      const gehaalBtns = document.querySelectorAll(".chinees-btn-gehaald");
-      gefaaldBtns.forEach((btn) => btn.classList.remove("selected"));
-      gehaalBtns.forEach((btn) => btn.classList.remove("selected"));
-
-      // Reload to show updated scores
-      await loadGamePlayers();
-
-      alert("Round validated and scores updated!");
-    } else {
-      alert("Failed to update some scores");
-    }
-  } catch (e) {
-    console.error("Error validating round:", e);
-    alert("Error validating round");
-  }
-}
+function togglePlayer(name, selected) {
   if (selected) {
     selectedPlayers.add(name);
   } else {
@@ -574,13 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const addPlayerBtn = document.getElementById("addPlayerBtn");
   if (addPlayerBtn) {
     addPlayerBtn.addEventListener("click", addNewPlayerEntry);
-  }
-
-  const validateRoundBtn = document.getElementById("validateRoundBtn");
-  if (validateRoundBtn) {
-    validateRoundBtn.addEventListener("click", () => {
-      validateRound();
-    });
   }
 
   const saveGameBtn = document.getElementById("saveGameBtn");

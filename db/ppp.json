@@ -1,0 +1,15 @@
+{
+  "name": "ppp",
+  "players": [
+    {
+      "name": "ee",
+      "score": 24
+    },
+    {
+      "name": "rrr",
+      "score": 9
+    }
+  ],
+  "active": true,
+  "gameType": "chinees poepeke"
+}

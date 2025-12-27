@@ -1,5 +1,6 @@
 {
   "name": "rrr",
   "players": [],
-  "active": true
+  "active": false,
+  "gameType": "quiz"
 }

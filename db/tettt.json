@@ -1,0 +1,15 @@
+{
+  "name": "tettt",
+  "players": [
+    {
+      "name": "tette",
+      "score": 11
+    },
+    {
+      "name": "getet",
+      "score": -1
+    }
+  ],
+  "active": false,
+  "gameType": "chinees poepeke"
+}

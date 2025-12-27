@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
-export function renderGamePage(res, baseDir) {
-    const file = path.join(baseDir, "..", "src", "public", "game.html");
+export async function renderGamePage(res, baseDir, gameType = "quiz") {
+    const fileName = gameType === "chinees poepeke" ? "gameChineesPoepeke.html" : "gameQuiz.html";
+    const file = path.join(baseDir, "..", "src", "public", fileName);
     fs.readFile(file, (err, data) => {
         if (err) {
             res.writeHead(500);
