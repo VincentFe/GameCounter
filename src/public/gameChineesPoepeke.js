@@ -5,43 +5,17 @@ let roundNumber = 1;
 // Track selected buttons for chinees poepeke: { playerName: "gehaald" | "gefaald" | null }
 let chineesButtonStates = {};
 
-function hasThreeConsecutiveZerosInHistory(playerName) {
-  // Check if a player's history has 3 consecutive zeros (not the current textbox)
-  const player = allPlayers.find((p) => (typeof p === "string" ? p : p.name) === playerName);
-  if (!player || typeof player !== "object" || !player.history) return false;
-  
-  const history = player.history;
-  
-  // Check if last 3 entries are all 0
-  if (history.length >= 3) {
-    const lastThree = history.slice(-3);
-    return lastThree[0] === 0 && lastThree[1] === 0 && lastThree[2] === 0;
-  }
-  
-  return false;
-}
+
 
 function updateRoundValidity() {
   const textboxes = document.querySelectorAll(".chinees-input");
   let sumOfValues = 0;
-  let hasAnyInvalidHistory = false;
-  
   textboxes.forEach((box) => {
     sumOfValues += parseInt(box.value || "0", 10);
   });
-  
-  // Check if any player has three consecutive zeros in history
-  allPlayers.forEach((player) => {
-    const playerName = typeof player === "string" ? player : player.name;
-    if (hasThreeConsecutiveZerosInHistory(playerName)) {
-      hasAnyInvalidHistory = true;
-    }
-  });
-  
-  const isValid = sumOfValues !== roundNumber && !hasAnyInvalidHistory;
+  const isValid = sumOfValues !== roundNumber;
   const geldidIndicator = document.getElementById("geldidIndicator");
   const overUnderBox = document.getElementById("overUnderBox");
-  
   // Update Over/Under display
   if (!overUnderBox) {
     console.warn('Missing #overUnderBox element');
@@ -61,40 +35,23 @@ function updateRoundValidity() {
       overUnderBox.style.pointerEvents = "none";
     }
   }
-  
-  // Update validity indicator at top
   if (isValid) {
     geldidIndicator.textContent = "Geldig: ✅";
     geldidIndicator.classList.add("valid");
+    document.querySelectorAll(".chinees-btn").forEach((btn) => {
+      btn.disabled = false;
+      btn.style.opacity = "0.7";
+      btn.style.cursor = "pointer";
+    });
   } else {
     geldidIndicator.textContent = "Geldig: ❌";
     geldidIndicator.classList.remove("valid");
+    document.querySelectorAll(".chinees-btn").forEach((btn) => {
+      btn.disabled = true;
+      btn.style.opacity = "0.3";
+      btn.style.cursor = "not-allowed";
+    });
   }
-  
-  // Disable buttons only for players with invalid history
-  const playerElements = document.querySelectorAll(".player-row");
-  playerElements.forEach((row) => {
-    const card = row.querySelector(".player-card");
-    if (!card) return;
-    
-    const playerName = card.dataset.name;
-    const buttons = row.querySelectorAll(".chinees-btn");
-    const hasInvalidHistory = hasThreeConsecutiveZerosInHistory(playerName);
-    
-    if (hasInvalidHistory) {
-      buttons.forEach((btn) => {
-        btn.disabled = true;
-        btn.style.opacity = "0.3";
-        btn.style.cursor = "not-allowed";
-      });
-    } else {
-      buttons.forEach((btn) => {
-        btn.disabled = false;
-        btn.style.opacity = "0.7";
-        btn.style.cursor = "pointer";
-      });
-    }
-  });
 }
 
 async function saveGame() {
