@@ -265,6 +265,14 @@ export function updatePlayerScore(req, res, baseDir) {
         (async () => {
             try {
                 const game = getGame();
+                const currentScore = game.getPlayerScore(name);
+                // For Chinees Poepeke: prevent negative scores
+                if (game.getGameType() === "chinees poepeke") {
+                    const newScore = currentScore + score;
+                    if (newScore < 0) {
+                        score = -currentScore; // Adjust score to keep it at 0
+                    }
+                }
                 game.updatePlayerScore(name, score);
                 // Optionally append a history value if provided
                 if (typeof parsed.historyValue === "number") {

@@ -1,6 +1,23 @@
 {
   "name": "poepeke",
-  "players": [],
-  "active": false,
+  "players": [
+    {
+      "name": "soof",
+      "score": 20,
+      "history": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "vin",
+      "score": 0,
+      "history": [
+        0,
+        1
+      ]
+    }
+  ],
+  "active": true,
   "gameType": "chinees poepeke"
 }
