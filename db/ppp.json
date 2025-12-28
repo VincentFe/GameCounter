@@ -3,13 +3,15 @@
   "players": [
     {
       "name": "ee",
-      "score": 24
+      "score": 24,
+      "history": []
     },
     {
       "name": "rrr",
-      "score": 9
+      "score": 9,
+      "history": []
     }
   ],
-  "active": true,
+  "active": false,
   "gameType": "chinees poepeke"
 }

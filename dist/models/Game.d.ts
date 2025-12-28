@@ -8,7 +8,8 @@ export declare class Game {
     private name;
     private active;
     private gameType;
-    constructor(players?: Player[], name?: string, active?: boolean, gameType?: GameType);
+    private round;
+    constructor(players?: Player[], name?: string, active?: boolean, gameType?: GameType, round?: number);
     addPlayer(player: Player | string): void;
     updatePlayerScore(name: string, score: number): void;
     setPlayerScore(name: string, score: number): void;
@@ -19,11 +20,14 @@ export declare class Game {
     removeAllPlayers(): void;
     getGameType(): GameType;
     setGameType(type: GameType): void;
+    getRound(): number;
+    setRound(round: number): void;
     toJSON(): {
         name: string;
         players: any[];
         active: boolean;
         gameType: GameType;
+        round: number;
     };
     static fromJSON(obj: any): Game;
     toPlainNames(): string[];

@@ -18,4 +18,6 @@ export declare function addPlayer(req: IncomingMessage, res: ServerResponse, bas
 export declare function markGameInactive(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
 export declare function getGameName(res: ServerResponse): void;
 export declare function getGameType(res: ServerResponse): void;
+export declare function getRound(res: ServerResponse): void;
+export declare function setRound(req: IncomingMessage, res: ServerResponse): void;
 //# sourceMappingURL=enterNames.d.ts.map

@@ -1,10 +1,13 @@
 {
-  "name": "hhh",
+  "name": "vçuv",
   "players": [
     {
-      "name": "gbgg",
+      "name": "bbb",
       "score": 0,
-      "history": []
+      "history": [
+        0,
+        0
+      ]
     }
   ],
   "active": false,

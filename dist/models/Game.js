@@ -7,11 +7,12 @@ export var GameType;
     GameType["CHINEES_POEPEKE"] = "chinees poepeke";
 })(GameType || (GameType = {}));
 export class Game {
-    constructor(players = [], name = "Default Game", active = true, gameType = GameType.QUIZ) {
+    constructor(players = [], name = "Default Game", active = true, gameType = GameType.QUIZ, round = 1) {
         this.players = players;
         this.name = name;
         this.active = active;
         this.gameType = gameType;
+        this.round = round;
     }
     addPlayer(player) {
         const p = player instanceof Player ? player : new Player(player);
@@ -55,12 +56,19 @@ export class Game {
     setGameType(type) {
         this.gameType = type;
     }
+    getRound() {
+        return this.round;
+    }
+    setRound(round) {
+        this.round = round;
+    }
     toJSON() {
         return {
             name: this.name,
             players: this.players.map((p) => p.toJSON()),
             active: this.active,
             gameType: this.gameType,
+            round: this.round,
         };
     }
     static fromJSON(obj) {
@@ -68,7 +76,8 @@ export class Game {
         const name = obj?.name || "Default Game";
         const active = typeof obj?.active === "boolean" ? obj.active : true;
         const gameType = obj?.gameType || GameType.QUIZ;
-        return new Game(players, name, active, gameType);
+        const round = typeof obj?.round === "number" ? obj.round : 1;
+        return new Game(players, name, active, gameType, round);
     }
     toPlainNames() {
         return this.players.map((p) => p.name);

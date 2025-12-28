@@ -2,7 +2,7 @@ import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import homeRoute from "./routes/home.js";
-import { renderEnterNames, saveName, setGameName, setGameType, getPlayers, deletePlayer, updatePlayerScore, setPlayerScore, getPlayerNames, listGames, saveGameInstance, addPlayer, markGameInactive, getGameName, getGameType, removeAllPlayers, } from "./routes/enterNames.js";
+import { renderEnterNames, saveName, setGameName, setGameType, getPlayers, deletePlayer, updatePlayerScore, setPlayerScore, getPlayerNames, listGames, saveGameInstance, addPlayer, markGameInactive, getGameName, getGameType, getRound, setRound, removeAllPlayers, } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
 import { renderLeaderboard, getLeaderboard } from "./routes/leaderboard.js";
@@ -64,6 +64,12 @@ const server = http.createServer((req, res) => {
     }
     if (method === "GET" && url === "/getGameType") {
         return getGameType(res);
+    }
+    if (method === "GET" && url === "/getRound") {
+        return getRound(res);
+    }
+    if (method === "POST" && url === "/setRound") {
+        return setRound(req, res);
     }
     if (method === "POST" && url === "/saveGame") {
         return saveGameInstance(req, res, __dirname);

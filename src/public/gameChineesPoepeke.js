@@ -16,6 +16,7 @@ function updateRoundValidity() {
   const isValid = sumOfValues !== roundNumber;
   const geldidIndicator = document.getElementById("geldidIndicator");
   const overUnderBox = document.getElementById("overUnderBox");
+  
   // Update Over/Under display
   if (!overUnderBox) {
     console.warn('Missing #overUnderBox element');
@@ -35,23 +36,53 @@ function updateRoundValidity() {
       overUnderBox.style.pointerEvents = "none";
     }
   }
+  
+  // Update validity indicator
   if (isValid) {
     geldidIndicator.textContent = "Geldig: ✅";
     geldidIndicator.classList.add("valid");
-    document.querySelectorAll(".chinees-btn").forEach((btn) => {
-      btn.disabled = false;
-      btn.style.opacity = "0.7";
-      btn.style.cursor = "pointer";
-    });
   } else {
     geldidIndicator.textContent = "Geldig: ❌";
     geldidIndicator.classList.remove("valid");
-    document.querySelectorAll(".chinees-btn").forEach((btn) => {
-      btn.disabled = true;
-      btn.style.opacity = "0.3";
-      btn.style.cursor = "not-allowed";
-    });
   }
+  
+  // Check per-player validity (3 consecutive zeros)
+  const playerElements = document.querySelectorAll(".player-row");
+  playerElements.forEach((row) => {
+    const card = row.querySelector(".player-card");
+    if (!card) return;
+    
+    const playerName = card.dataset.name;
+    const input = row.querySelector(".chinees-input");
+    const currentValue = parseInt(input.value || "0", 10);
+    
+    // Get player's history
+    const player = allPlayers.find((p) => (typeof p === "string" ? p : p.name) === playerName);
+    const history = player && typeof player === "object" ? (player.history || []) : [];
+    
+    // Check if last 2 entries in history are 0 and current value is 0
+    const hasThreeConsecutiveZeros = 
+      history.length >= 2 && 
+      history[history.length - 2] === 0 && 
+      history[history.length - 1] === 0 && 
+      currentValue === 0;
+    
+    // Disable buttons for this player if invalid
+    const buttons = row.querySelectorAll(".chinees-btn");
+    if (hasThreeConsecutiveZeros) {
+      buttons.forEach((btn) => {
+        btn.disabled = true;
+        btn.style.opacity = "0.3";
+        btn.style.cursor = "not-allowed";
+      });
+    } else {
+      buttons.forEach((btn) => {
+        btn.disabled = false;
+        btn.style.opacity = "0.7";
+        btn.style.cursor = "pointer";
+      });
+    }
+  });
 }
 
 async function saveGame() {
@@ -201,6 +232,28 @@ async function loadGamePlayers() {
       // Silently fail - use default title
     }
 
+    // Load round number based on a player's history
+    try {
+      if (allPlayers.length > 0) {
+        // Get a random player
+        const randomPlayer = allPlayers[Math.floor(Math.random() * allPlayers.length)];
+        const playerHistory = randomPlayer.history || [];
+        
+        // Sum all history entries and add 1 to get the current round
+        const historySum = playerHistory.length;
+        //const historySum = playerHistory.reduce((sum, val) => sum + (typeof val === "number" ? val : 0), 0);
+        roundNumber = historySum + 1;
+        
+        const roundCounter = document.getElementById("roundCounter");
+        if (roundCounter) {
+          roundCounter.textContent = `Ronde: ${roundNumber}`;
+        }
+      }
+    } catch (e) {
+      // Silently fail - use default round
+      console.error("Error loading round from history:", e);
+    }
+
     if (allPlayers.length === 0) {
       if (emptyStateEl) emptyStateEl.style.display = "block";
       return;
@@ -288,9 +341,9 @@ async function loadGamePlayers() {
       const input = document.createElement("input");
       input.type = "number";
       input.className = "chinees-input";
-      input.placeholder = "0";
+      input.placeholder = "1";
         input.min = "0";
-        input.value = "0";
+        input.value = "1";
         input.addEventListener("change", updateRoundValidity);
         input.addEventListener("input", updateRoundValidity);
 
@@ -412,9 +465,20 @@ async function validateRound() {
         roundCounter.textContent = `Ronde: ${roundNumber}`;
       }
 
-      // Reset all textboxes to 0 and deselect all buttons
+      // Save the new round number to the backend
+      try {
+        await fetch("/setRound", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ round: roundNumber }),
+        });
+      } catch (e) {
+        console.error("Error saving round number:", e);
+      }
+
+      // Reset all textboxes to 1 and deselect all buttons
       updates.forEach(({ inputElement }) => {
-        inputElement.value = "0";
+        inputElement.value = "1";
       });
 
       // Reset button states

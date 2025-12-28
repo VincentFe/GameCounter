@@ -21,6 +21,8 @@ import {
   markGameInactive,
   getGameName,
   getGameType,
+  getRound,
+  setRound,
   removeAllPlayers,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
@@ -103,6 +105,14 @@ const server = http.createServer(
 
     if (method === "GET" && url === "/getGameType") {
       return getGameType(res);
+    }
+
+    if (method === "GET" && url === "/getRound") {
+      return getRound(res);
+    }
+
+    if (method === "POST" && url === "/setRound") {
+      return setRound(req, res);
     }
 
     if (method === "POST" && url === "/saveGame") {

@@ -2,9 +2,16 @@
   "name": "tttt",
   "players": [
     {
-      "name": "tttt",
-      "score": 0
+      "name": "ttttt",
+      "score": 21,
+      "history": [
+        0,
+        2,
+        0,
+        0
+      ]
     }
   ],
-  "active": false
+  "active": false,
+  "gameType": "chinees poepeke"
 }

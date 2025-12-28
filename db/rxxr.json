@@ -3,9 +3,10 @@
   "players": [
     {
       "name": "xtdx(",
-      "score": 2
+      "score": 2,
+      "history": []
     }
   ],
-  "active": true,
+  "active": false,
   "gameType": "quiz"
 }

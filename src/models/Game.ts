@@ -12,17 +12,20 @@ export class Game {
   private name: string;
   private active: boolean;
   private gameType: GameType;
+  private round: number;
 
   constructor(
     players: Player[] = [],
     name: string = "Default Game",
     active: boolean = true,
-    gameType: GameType = GameType.QUIZ
+    gameType: GameType = GameType.QUIZ,
+    round: number = 1
   ) {
     this.players = players;
     this.name = name;
     this.active = active;
     this.gameType = gameType;
+    this.round = round;
   }
 
   addPlayer(player: Player | string): void {
@@ -76,12 +79,21 @@ export class Game {
     this.gameType = type;
   }
 
-  toJSON(): { name: string; players: any[]; active: boolean; gameType: GameType } {
+  getRound(): number {
+    return this.round;
+  }
+
+  setRound(round: number): void {
+    this.round = round;
+  }
+
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: GameType; round: number } {
     return {
       name: this.name,
       players: this.players.map((p) => p.toJSON()),
       active: this.active,
       gameType: this.gameType,
+      round: this.round,
     };
   }
 
@@ -90,7 +102,8 @@ export class Game {
     const name = obj?.name || "Default Game";
     const active = typeof obj?.active === "boolean" ? obj.active : true;
     const gameType = (obj?.gameType as GameType) || GameType.QUIZ;
-    return new Game(players, name, active, gameType);
+    const round = typeof obj?.round === "number" ? obj.round : 1;
+    return new Game(players, name, active, gameType, round);
   }
 
   toPlainNames(): string[] {
