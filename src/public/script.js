@@ -99,7 +99,8 @@ async function loadManagePlayers() {
           });
           const data = await r.json();
           if (r.ok && data.ok) {
-            li.remove();
+            // reload the manage list to ensure buttons are re-rendered correctly
+            await loadManagePlayers();
             // also update home/game lists if present
             if (typeof loadPlayers === "function") loadPlayers();
             if (typeof loadGamePlayers === "function") loadGamePlayers();
@@ -122,9 +123,44 @@ async function loadManagePlayers() {
 }
 
 // Call appropriate loader on DOMContentLoaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("nameForm")) {
-    loadManagePlayers();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("clear") === "true") {
+        // Clear all players when navigated from start-new-game
+        await fetch("/removeAllPlayers", { method: "POST" });
+        // then load (will show empty list)
+        await loadManagePlayers();
+        return;
+      }
+
+      if (params.get("from") === "leaderboard") {
+        // Initialize players from leaderboard but reset scores/history
+        try {
+          const lb = await fetch("/api/leaderboard");
+          if (lb.ok) {
+            const players = await lb.json();
+            const names = players.map((p) => p.name || p).filter(Boolean);
+            await fetch("/resetPlayersForNewGame", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ names }),
+            });
+          }
+        } catch (e) {
+          console.error("Failed to init from leaderboard:", e);
+        }
+        await loadManagePlayers();
+        return;
+      }
+
+      // Default: just load existing players
+      await loadManagePlayers();
+    } catch (e) {
+      console.error("Error during enterNames init:", e);
+      loadManagePlayers();
+    }
   }
   // Note: /game page players are loaded by game.js
 });
@@ -136,8 +172,8 @@ if (startBtn) {
   startBtn.addEventListener("click", () => {
     const path = window.location.pathname;
     if (path === "/" || path === "") {
-      // from home -> go to enter names
-      window.location.href = "/enterNames";
+      // from home -> go to enter names and clear list
+      window.location.href = "/enterNames?clear=true";
     } else if (path === "/enterNames" || path.startsWith("/enterNames")) {
       // from enter names -> start game
       // only proceed if there are players; otherwise warn

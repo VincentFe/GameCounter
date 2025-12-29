@@ -1,6 +1,7 @@
 {
   "name": "Unnamed Game",
   "players": [],
-  "active": false,
-  "gameType": "chinees poepeke"
+  "active": true,
+  "gameType": "quiz",
+  "gameMaster": ""
 }

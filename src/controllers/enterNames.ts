@@ -447,6 +447,23 @@ export async function setRound(req: IncomingMessage, res: ServerResponse, baseDi
 	}
 }
 
+/**
+ * Reset players for a new game using the provided name list.
+ * Body: { names: string[] }
+ */
+export async function resetPlayersForNewGame(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const names = Array.isArray(parsed.names) ? parsed.names.map((n: any) => String(n || "").trim()) : [];
+		await GameService.resetPlayersForNewGame(baseDir, names);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
+}
+
 export default {};
 
 

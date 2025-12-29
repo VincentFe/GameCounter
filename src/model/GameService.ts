@@ -176,6 +176,7 @@ export function listGames(baseDir: string){
           const filePath = path.join(dbDir,file);
           const data = fs.readFileSync(filePath,'utf8');
           const gameData = JSON.parse(data);
+          // only include games that are active (active !== false)
           if (gameData.active !== false) games.push(file.replace('.json',''));
         }catch(e){ }
       }
@@ -260,4 +261,31 @@ export async function loadGameByNameService(baseDir: string, name: string){
   return { ok: true };
 }
 
-export default { addPlayerByName, saveName, setGameName, setGameType, getPlayers, getPlayerNames, deletePlayerByName, removeAllPlayers, updatePlayerScore, setPlayerScore, listGames, saveGameInstance, markGameInactive, getGameName, getGameType, getRound, setRound, loadGameByNameService };
+/**
+ * Reset the current game's players to the provided list of names.
+ * Each player will have score 0 and an empty history. Saves the game.
+ * @param {string} baseDir
+ * @param {string[]} names
+ */
+export async function resetPlayersForNewGame(baseDir: string, names: string[]){
+  const game = getGame();
+  // start fresh
+  game.removeAllPlayers();
+  if (Array.isArray(names)){
+    for (const n of names){
+      if (!n) continue;
+      game.addPlayer(new Player(n));
+      game.setPlayerScore(n, 0);
+      // clear history if present
+      const players = game.getPlayers();
+      const idx = game.findPlayerIndexByName(n);
+      if (idx !== -1) {
+        (players[idx] as any).history = [];
+      }
+    }
+  }
+  await saveGame(baseDir);
+  return { ok: true };
+}
+
+export default { addPlayerByName, saveName, setGameName, setGameType, getPlayers, getPlayerNames, deletePlayerByName, removeAllPlayers, updatePlayerScore, setPlayerScore, listGames, saveGameInstance, markGameInactive, getGameName, getGameType, getRound, setRound, loadGameByNameService, resetPlayersForNewGame };

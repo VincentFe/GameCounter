@@ -2,16 +2,12 @@
   "name": "test",
   "players": [
     {
-      "name": "start",
-      "score": 14,
-      "history": [
-        0,
-        0,
-        4
-      ]
+      "name": "geteste",
+      "score": 0,
+      "history": []
     }
   ],
   "active": false,
-  "gameType": "chinees poepeke",
-  "round": 4
+  "gameType": "quiz",
+  "gameMaster": ""
 }
