@@ -100,6 +100,24 @@
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
+    select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      background: white;
+      color: #333;
+      font-weight: 600;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
     .form-controls {
       display: flex;
       gap: 10px;
@@ -308,6 +326,14 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="gameType">Game Type:</label>
+          <select id="gameType">
+            <option value="quiz">Quiz</option>
+            <option value="chinees poepeke">Chinees Poepeke</option>
+          </select>
+        </div>
+
         <div class="form-controls">
           <button type="button" id="startGameBtn" class="btn btn-create">
             Start Game
@@ -440,6 +466,30 @@
       const playerList = document.getElementById("playerList");
       if (playerList) {
         observer.observe(playerList, { childList: true });
+      }
+
+      // Game type selector
+      const gameTypeSelect = document.getElementById("gameType");
+      if (gameTypeSelect) {
+        gameTypeSelect.addEventListener("change", async (e) => {
+          const type = e.target.value;
+          try {
+            const resp = await fetch("/setGameType", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type }),
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.ok) {
+              alert("Failed to set game type: " + (data?.error || resp.statusText));
+              // Reset to previous value on error
+              e.target.value = e.target.defaultValue;
+            }
+          } catch (err) {
+            alert("Error setting game type: " + err.message);
+            e.target.value = e.target.defaultValue;
+          }
+        });
       }
 
       // Call after DOM is ready

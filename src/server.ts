@@ -9,6 +9,7 @@ import {
   renderEnterNames,
   saveName,
   setGameName,
+  setGameType,
   getPlayers,
   deletePlayer,
   updatePlayerScore,
@@ -19,12 +20,15 @@ import {
   addPlayer,
   markGameInactive,
   getGameName,
+  getGameType,
+  getRound,
+  setRound,
   removeAllPlayers,
 } from "./routes/enterNames.js";
 import { serveStatic } from "./routes/static.js";
 import { renderGamePage } from "./routes/game.js";
 import { renderLeaderboard, getLeaderboard } from "./routes/leaderboard.js";
-import { initializeGame, saveGame, loadGameByName } from "./gameManager.js";
+import { initializeGame, saveGame, loadGameByName, getGame } from "./gameManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,6 +67,10 @@ const server = http.createServer(
       return setGameName(req, res, __dirname);
     }
 
+    if (method === "POST" && url === "/setGameType") {
+      return setGameType(req, res, __dirname);
+    }
+
     if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {
       return deletePlayer(req, res, __dirname);
     }
@@ -95,6 +103,18 @@ const server = http.createServer(
       return getGameName(res);
     }
 
+    if (method === "GET" && url === "/getGameType") {
+      return getGameType(res);
+    }
+
+    if (method === "GET" && url === "/getRound") {
+      return getRound(res);
+    }
+
+    if (method === "POST" && url === "/setRound") {
+      return setRound(req, res);
+    }
+
     if (method === "POST" && url === "/saveGame") {
       return saveGameInstance(req, res, __dirname);
     }
@@ -125,7 +145,11 @@ const server = http.createServer(
       if (gameName) {
         // Load the specified game before rendering
         loadGameByName(__dirname, gameName)
-          .then(() => renderGamePage(res, __dirname))
+          .then(() => {
+            const game = getGame();
+            const gameType = game.getGameType();
+            renderGamePage(res, __dirname, gameType);
+          })
           .catch((err) => {
             console.error("Failed to load game:", err);
             res.writeHead(500);
@@ -134,7 +158,14 @@ const server = http.createServer(
         return; // Prevent falling through to other handlers
       } else {
         // No game specified, just render with current game instance
-        return renderGamePage(res, __dirname);
+        try {
+          const game = getGame();
+          const gameType = game.getGameType();
+          return renderGamePage(res, __dirname, gameType);
+        } catch (err) {
+          console.error("Error getting game type:", err);
+          return renderGamePage(res, __dirname, "quiz");
+        }
       }
     }
 

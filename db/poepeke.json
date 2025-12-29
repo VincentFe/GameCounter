@@ -1,0 +1,17 @@
+{
+  "name": "poepeke",
+  "players": [
+    {
+      "name": "bbbb",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "gggg",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "active": false,
+  "gameType": "chinees poepeke"
+}

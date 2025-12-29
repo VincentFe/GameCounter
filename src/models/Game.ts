@@ -2,15 +2,30 @@ import fs from "fs/promises";
 import path from "path";
 import Player from "./Player.js";
 
+export enum GameType {
+  QUIZ = "quiz",
+  CHINEES_POEPEKE = "chinees poepeke",
+}
+
 export class Game {
   private players: Player[];
   private name: string;
   private active: boolean;
+  private gameType: GameType;
+  private round: number;
 
-  constructor(players: Player[] = [], name: string = "Default Game", active: boolean = true) {
+  constructor(
+    players: Player[] = [],
+    name: string = "Default Game",
+    active: boolean = true,
+    gameType: GameType = GameType.QUIZ,
+    round: number = 1
+  ) {
     this.players = players;
     this.name = name;
     this.active = active;
+    this.gameType = gameType;
+    this.round = round;
   }
 
   addPlayer(player: Player | string): void {
@@ -56,11 +71,29 @@ export class Game {
     this.players = [];
   }
 
-  toJSON(): { name: string; players: any[]; active: boolean } {
+  getGameType(): GameType {
+    return this.gameType;
+  }
+
+  setGameType(type: GameType): void {
+    this.gameType = type;
+  }
+
+  getRound(): number {
+    return this.round;
+  }
+
+  setRound(round: number): void {
+    this.round = round;
+  }
+
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: GameType; round: number } {
     return {
       name: this.name,
       players: this.players.map((p) => p.toJSON()),
       active: this.active,
+      gameType: this.gameType,
+      round: this.round,
     };
   }
 
@@ -68,7 +101,9 @@ export class Game {
     const players = (obj?.players || []).map(Player.fromJSON);
     const name = obj?.name || "Default Game";
     const active = typeof obj?.active === "boolean" ? obj.active : true;
-    return new Game(players, name, active);
+    const gameType = (obj?.gameType as GameType) || GameType.QUIZ;
+    const round = typeof obj?.round === "number" ? obj.round : 1;
+    return new Game(players, name, active, gameType, round);
   }
 
   toPlainNames(): string[] {
@@ -76,7 +111,16 @@ export class Game {
   }
 
   toPlayersWithScores(): any[] {
-    return this.players.map((p) => ({ name: p.name, score: p.getScore() }));
+    return this.players.map((p) => ({ name: p.name, score: p.getScore(), history: (p as any).history || [] }));
+  }
+
+  addPlayerHistory(name: string, value: number): void {
+    const idx = this.findPlayerIndexByName(name);
+    if (idx !== -1) {
+      const player = this.players[idx] as any;
+      if (!Array.isArray(player.history)) player.history = [];
+      player.history.push(typeof value === "number" ? value : Number(value) || 0);
+    }
   }
 
   getGameName(): string {

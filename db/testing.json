@@ -1,0 +1,15 @@
+{
+  "name": "testing",
+  "players": [
+    {
+      "name": "test",
+      "score": 3
+    },
+    {
+      "name": "tweede",
+      "score": 0
+    }
+  ],
+  "active": false,
+  "gameType": "chinees poepeke"
+}

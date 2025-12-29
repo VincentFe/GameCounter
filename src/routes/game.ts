@@ -2,11 +2,13 @@ import fs from "fs";
 import path from "path";
 import { ServerResponse } from "http";
 
-export function renderGamePage(
+export async function renderGamePage(
   res: ServerResponse,
-  baseDir: string
-): void {
-  const file = path.join(baseDir, "..", "src", "public", "game.html");
+  baseDir: string,
+  gameType: string = "quiz"
+): Promise<void> {
+  const fileName = gameType === "chinees poepeke" ? "gameChineesPoepeke.html" : "gameQuiz.html";
+  const file = path.join(baseDir, "..", "src", "public", fileName);
 
   fs.readFile(file, (err, data) => {
     if (err) {

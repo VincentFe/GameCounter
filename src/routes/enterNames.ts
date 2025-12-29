@@ -128,6 +128,50 @@ export function setGameName(
   });
 }
 
+export function setGameType(
+  req: IncomingMessage,
+  res: ServerResponse,
+  baseDir: string
+): void {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", () => {
+    let type = "";
+    try {
+      const parsed = JSON.parse(body || "{}");
+      type = (parsed.type || "").toString().trim();
+    } catch (e) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
+      return;
+    }
+
+    if (!type || (type !== "quiz" && type !== "chinees poepeke")) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ ok: false, error: "Invalid game type" }));
+      return;
+    }
+
+    try {
+      const game = getGame();
+      game.setGameType(type as any);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ ok: false, error: "Failed to set game type" }));
+    }
+  });
+
+  req.on("error", () => {
+    res.writeHead(500);
+    res.end(JSON.stringify({ ok: false, error: "Request error" }));
+  });
+}
+
 export function getPlayers(
   res: ServerResponse,
   baseDir: string
@@ -246,8 +290,9 @@ export function updatePlayerScore(
   req.on("end", () => {
     let name = "";
     let score: number | undefined;
+    let parsed: any = {};
     try {
-      const parsed = JSON.parse(body || "{}");
+      parsed = JSON.parse(body || "{}");
       name = (parsed.name || "").toString().trim();
       score = typeof parsed.score === "number" ? parsed.score : undefined;
     } catch (e) {
@@ -265,7 +310,21 @@ export function updatePlayerScore(
     (async () => {
       try {
         const game = getGame();
+        const currentScore = game.getPlayerScore(name);
+        
+        // For Chinees Poepeke: prevent negative scores
+        if (game.getGameType() === "chinees poepeke") {
+          const newScore = currentScore + score;
+          if (newScore < 0) {
+            score = -currentScore; // Adjust score to keep it at 0
+          }
+        }
+        
         game.updatePlayerScore(name, score);
+        // Optionally append a history value if provided
+        if (typeof (parsed as any).historyValue === "number") {
+          game.addPlayerHistory(name, (parsed as any).historyValue);
+        }
         await saveGame(baseDir);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));
@@ -461,4 +520,64 @@ export function getGameName(res: ServerResponse): void {
     res.writeHead(500);
     res.end(JSON.stringify({ ok: false, error: "Failed to get game name" }));
   }
+}
+
+export function getGameType(res: ServerResponse): void {
+  try {
+    const game = getGame();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ type: game.getGameType() }));
+  } catch (err) {
+    res.writeHead(500);
+    res.end(JSON.stringify({ ok: false, error: "Failed to get game type" }));
+  }
+}
+export function getRound(res: ServerResponse): void {
+  try {
+    const game = getGame();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ round: game.getRound() }));
+  } catch (err) {
+    res.writeHead(500);
+    res.end(JSON.stringify({ ok: false, error: "Failed to get round" }));
+  }
+}
+
+export function setRound(req: IncomingMessage, res: ServerResponse): void {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    let round: number | undefined;
+    try {
+      const parsed = JSON.parse(body || "{}");
+      round = typeof parsed.round === "number" ? parsed.round : undefined;
+    } catch (e) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
+      return;
+    }
+
+    if (round === undefined) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ ok: false, error: "Round required" }));
+      return;
+    }
+
+    try {
+      const game = getGame();
+      game.setRound(round);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ ok: false, error: "Failed to set round" }));
+    }
+  });
+
+  req.on("error", () => {
+    res.writeHead(500);
+    res.end(JSON.stringify({ ok: false, error: "Request error" }));
+  });
 }
