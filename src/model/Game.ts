@@ -3,45 +3,36 @@ import path from "path";
 import Player from "./Player.js";
 
 /**
- * Enum for game types.
+ * Abstract base class for game instances with player management and state.
+ * Manages player roster, game name, and active state. Subclasses define game-specific behavior.
  */
-export enum GameType {
-  QUIZ = "quiz",
-  CHINEES_POEPEKE = "chinees poepeke",
-}
-
-/**
- * Represents a game instance with players, scoring, and game state management.
- * Manages player roster, game type (quiz or chinees poepeke), round tracking, and persistence.
- */
-export class Game {
-  private players: Player[];
-  private name: string;
-  private active: boolean;
-  private gameType: GameType;
-  private round: number;
+export abstract class Game {
+  protected players: Player[];
+  protected name: string;
+  protected active: boolean;
 
   /**
    * Create a new game instance.
    * @param {Player[]} [players=[]] - Initial list of players.
    * @param {string} [name="Default Game"] - The game name.
    * @param {boolean} [active=true] - Whether the game is currently active.
-   * @param {GameType} [gameType=GameType.QUIZ] - The type of game (quiz or chinees poepeke).
-   * @param {number} [round=1] - The current round number.
    */
   constructor(
     players: Player[] = [],
     name: string = "Default Game",
-    active: boolean = true,
-    gameType: GameType = GameType.QUIZ,
-    round: number = 1
+    active: boolean = true
   ) {
     this.players = players;
     this.name = name;
     this.active = active;
-    this.gameType = gameType;
-    this.round = round;
   }
+
+  /**
+   * Get the game type as a string identifier.
+   * @abstract
+   * @returns {string} The game type.
+   */
+  abstract getGameType(): string;
 
   /**
    * Add a player to the game.
@@ -122,28 +113,14 @@ export class Game {
     this.players = [];
   }
 
-  /**
-   * Get the current game type.
-   * @returns {GameType} The game type (quiz or chinees poepeke).
-   */
-  getGameType(): GameType {
-    return this.gameType;
-  }
 
-  /**
-   * Set the game type.
-   * @param {GameType} type - The game type to set.
-   */
-  setGameType(type: GameType): void {
-    this.gameType = type;
-  }
 
   /**
    * Get the current round number.
    * @returns {number} The round number.
    */
   getRound(): number {
-    return this.round;
+    return 0; // Default implementation, overridden by ChineesPoepeke
   }
 
   /**
@@ -151,35 +128,40 @@ export class Game {
    * @param {number} round - The round number.
    */
   setRound(round: number): void {
-    this.round = round;
+    // Default implementation, overridden by ChineesPoepeke
   }
 
   /**
    * Serialize the game to a JSON object.
-   * @returns {Object} A JSON object with name, players, active state, gameType, and round.
+   * @returns {Object} A JSON object with name, players, active state, and gameType.
    */
-  toJSON(): { name: string; players: any[]; active: boolean; gameType: GameType; round: number } {
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: string } {
     return {
       name: this.name,
       players: this.players.map((p) => p.toJSON()),
       active: this.active,
-      gameType: this.gameType,
-      round: this.round,
+      gameType: this.getGameType(),
     };
   }
 
   /**
-   * Deserialize a game from a JSON object.
+   * Deserialize a game from a JSON object. Routes to appropriate subclass.
    * @param {any} obj - A JSON object with game data.
-   * @returns {Game} A new Game instance.
+   * @returns {Game} A new Game subclass instance (Quiz or ChineesPoepeke).
    */
   static fromJSON(obj: any): Game {
     const players = (obj?.players || []).map(Player.fromJSON);
     const name = obj?.name || "Default Game";
     const active = typeof obj?.active === "boolean" ? obj.active : true;
-    const gameType = (obj?.gameType as GameType) || GameType.QUIZ;
-    const round = typeof obj?.round === "number" ? obj.round : 1;
-    return new Game(players, name, active, gameType, round);
+    const gameType = obj?.gameType || "quiz";
+
+    if (gameType === "chinees poepeke") {
+      const round = typeof obj?.round === "number" ? obj.round : 1;
+      return new ChineesPoepeke(players, name, active, round);
+    } else {
+      const gameMaster = obj?.gameMaster || "";
+      return new Quiz(players, name, active, gameMaster);
+    }
   }
 
   /**
@@ -258,6 +240,130 @@ export class Game {
     const filePath = path.join(dbDir, `${filename}.json`);
     await fs.mkdir(dbDir, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(this.toJSON(), null, 2), "utf8");
+  }
+}
+
+/**
+ * Quiz game type. Extends Game with a gameMaster field.
+ */
+export class Quiz extends Game {
+  private gameMaster: string;
+
+  /**
+   * Create a new quiz game.
+   * @param {Player[]} [players=[]] - Initial list of players.
+   * @param {string} [name="Default Game"] - The game name.
+   * @param {boolean} [active=true] - Whether the game is currently active.
+   * @param {string} [gameMaster=""] - The quiz master's name.
+   */
+  constructor(
+    players: Player[] = [],
+    name: string = "Default Game",
+    active: boolean = true,
+    gameMaster: string = ""
+  ) {
+    super(players, name, active);
+    this.gameMaster = gameMaster;
+  }
+
+  /**
+   * Get the game type.
+   * @returns {string} Always "quiz".
+   */
+  getGameType(): string {
+    return "quiz";
+  }
+
+  /**
+   * Get the game master's name.
+   * @returns {string} The game master's name.
+   */
+  getGameMaster(): string {
+    return this.gameMaster;
+  }
+
+  /**
+   * Set the game master's name.
+   * @param {string} gameMaster - The game master's name.
+   */
+  setGameMaster(gameMaster: string): void {
+    this.gameMaster = gameMaster;
+  }
+
+  /**
+   * Serialize the quiz game to a JSON object.
+   * @returns {Object} A JSON object with name, players, active state, gameType, and gameMaster.
+   */
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: string; gameMaster: string } {
+    return {
+      name: this.name,
+      players: this.players.map((p) => p.toJSON()),
+      active: this.active,
+      gameType: this.getGameType(),
+      gameMaster: this.gameMaster,
+    };
+  }
+}
+
+/**
+ * Chinees Poepeke game type. Extends Game with a round field.
+ */
+export class ChineesPoepeke extends Game {
+  private round: number;
+
+  /**
+   * Create a new chinees poepeke game.
+   * @param {Player[]} [players=[]] - Initial list of players.
+   * @param {string} [name="Default Game"] - The game name.
+   * @param {boolean} [active=true] - Whether the game is currently active.
+   * @param {number} [round=1] - The current round number.
+   */
+  constructor(
+    players: Player[] = [],
+    name: string = "Default Game",
+    active: boolean = true,
+    round: number = 1
+  ) {
+    super(players, name, active);
+    this.round = round;
+  }
+
+  /**
+   * Get the game type.
+   * @returns {string} Always "chinees poepeke".
+   */
+  getGameType(): string {
+    return "chinees poepeke";
+  }
+
+  /**
+   * Get the current round number.
+   * @returns {number} The round number.
+   */
+  getRound(): number {
+    return this.round;
+  }
+
+  /**
+   * Set the current round number.
+   * @param {number} round - The round number.
+   */
+  setRound(round: number): void {
+    this.round = round;
+  }
+
+  /**
+   * Serialize the chinees poepeke game to a JSON object.
+   * @returns {Object} A JSON object with name, players, active state, gameType, and round.
+   */
+  toJSON(): { name: string; players: any[]; active: boolean; gameType: string; round: number } {
+    return {
+      name: this.name,
+      players: this.players.map((p) => p.toJSON()),
+      active: this.active,
+      gameType: this.getGameType(),
+      round: this.round,
+    };
   }
 }
 

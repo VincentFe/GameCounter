@@ -2,17 +2,16 @@
   "name": "test",
   "players": [
     {
-      "name": "speler",
-      "score": 0,
-      "history": []
-    },
-    {
-      "name": "test",
-      "score": 0,
-      "history": []
+      "name": "start",
+      "score": 14,
+      "history": [
+        0,
+        0,
+        4
+      ]
     }
   ],
-  "active": true,
+  "active": false,
   "gameType": "chinees poepeke",
-  "round": 1
+  "round": 4
 }

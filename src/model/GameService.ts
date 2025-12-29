@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { getGame, saveGame, loadGameByName } from "./gameManager.js";
+import { getGame, saveGame, loadGameByName, setGameInstance } from "./gameManager.js";
 import Player from "./Player.js";
-import Game from "./Game.js";
+import { Game, Quiz, ChineesPoepeke } from "./Game.js";
 
 /**
  * Add a new player to the current game by name.
@@ -47,14 +47,26 @@ export async function setGameName(baseDir: string, name: string){
 /**
  * Set the game type.
  * Valid types are "quiz" and "chinees poepeke".
+ * Creates a new game instance of the appropriate type while preserving player data.
  * @param {string} baseDir - The base directory (__dirname or equivalent).
  * @param {string} type - The game type ("quiz" or "chinees poepeke").
  * @returns {Promise<{ ok: boolean; error?: string }>} Success status and optional error message.
  */
 export async function setGameType(baseDir: string, type: string){
   if (!type || (type !== "quiz" && type !== "chinees poepeke")) return { ok: false, error: "Invalid game type" };
-  const game = getGame();
-  game.setGameType(type as any);
+  const currentGame = getGame();
+  const players = currentGame.getPlayers();
+  const name = currentGame.getGameName();
+  const active = currentGame.isActive();
+
+  let newGame: Game;
+  if (type === "quiz") {
+    newGame = new Quiz(players, name, active);
+  } else {
+    newGame = new ChineesPoepeke(players, name, active);
+  }
+
+  setGameInstance(newGame);
   await saveGame(baseDir);
   return { ok: true };
 }

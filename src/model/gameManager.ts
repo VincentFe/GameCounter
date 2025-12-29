@@ -1,18 +1,18 @@
 import path from "path";
-import Game from "./Game.js";
+import { Game, Quiz, ChineesPoepeke } from "./Game.js";
 import fs from "fs/promises";
 
 let gameInstance: Game | null = null;
 
 /**
  * Initialize the global game instance.
- * If not already initialized, creates a new game with default name "Unnamed Game".
+ * If not already initialized, creates a new Quiz game with default name "Unnamed Game".
  * @param {string} baseDir - The base directory (__dirname or equivalent).
  * @returns {Promise<Game>} A promise resolving to the game instance.
  */
 export async function initializeGame(baseDir: string): Promise<Game> {
   if (!gameInstance) {
-    gameInstance = new Game([], "Unnamed Game");
+    gameInstance = new Quiz([], "Unnamed Game");
   }
   return gameInstance;
 }
@@ -69,4 +69,12 @@ export function resetGame(): void {
   gameInstance = null;
 }
 
-export default { initializeGame, getGame, loadGameByName, saveGame, resetGame };
+/**
+ * Set the global game instance directly.
+ * @param {Game} game - The game instance to set.
+ */
+export function setGameInstance(game: Game): void {
+  gameInstance = game;
+}
+
+export default { initializeGame, getGame, loadGameByName, saveGame, resetGame, setGameInstance };
