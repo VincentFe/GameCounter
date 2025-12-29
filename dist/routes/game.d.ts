@@ -1,2 +1,2 @@
-export * from "../controllers/game.js";
+export {};
 //# sourceMappingURL=game.d.ts.map

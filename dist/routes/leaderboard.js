@@ -1,2 +1,2 @@
-export * from "../controllers/leaderboard.js";
+export {};
 //# sourceMappingURL=leaderboard.js.map

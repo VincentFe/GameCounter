@@ -1,2 +1,2 @@
-export * from "../controllers/static.js";
+export {};
 //# sourceMappingURL=static.d.ts.map

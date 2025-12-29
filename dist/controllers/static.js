@@ -1,5 +1,13 @@
 import fs from "fs";
 import path from "path";
+/**
+ * Serve static files (HTML, CSS, JS, images, etc.) from the public directory.
+ * Maps file extensions to appropriate MIME types.
+ * @param {IncomingMessage} req - HTTP request object containing the file path in req.url.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {void}
+ */
 export function serveStatic(req, res, baseDir) {
     const filePath = path.join(baseDir, "..", "src", req.url || "");
     fs.readFile(filePath, (err, data) => {

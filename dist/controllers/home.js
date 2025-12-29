@@ -1,5 +1,11 @@
 import fs from "fs";
 import path from "path";
+/**
+ * Render the home page (index.html).
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {void}
+ */
 export default function homeRoute(res, baseDir) {
     const file = path.join(baseDir, "..", "src", "public", "index.html");
     fs.readFile(file, (err, data) => {

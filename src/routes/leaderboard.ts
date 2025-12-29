@@ -1,1 +1,1 @@
-export * from "../controllers/leaderboard.js";
+export {};

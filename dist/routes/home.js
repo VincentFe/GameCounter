@@ -1,2 +1,2 @@
-export { default } from "../controllers/home.js";
+export {};
 //# sourceMappingURL=home.js.map

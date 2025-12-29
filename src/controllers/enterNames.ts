@@ -1,574 +1,452 @@
 import fs from "fs";
 import path from "path";
 import { IncomingMessage, ServerResponse } from "http";
-import { getGame, saveGame, loadGameByName } from "../model/gameManager.js";
-import Player from "../model/Player.js";
+import * as GameService from "../model/GameService.js";
 
+/**
+ * Helper function to parse JSON from request body.
+ * Reads the entire request stream and parses it as JSON.
+ * @param {IncomingMessage} req - The HTTP request object.
+ * @returns {Promise<any>} A promise resolving to the parsed JSON object.
+ * @throws {Error} If JSON parsing fails.
+ */
+async function readJsonBody(req: IncomingMessage): Promise<any> {
+	return new Promise((resolve, reject) => {
+		let body = "";
+		req.on("data", (chunk) => (body += chunk.toString()));
+		req.on("end", () => {
+			try {
+				const parsed = JSON.parse(body || "{}");
+				resolve(parsed);
+			} catch (e) {
+				reject(new Error("Invalid JSON"));
+			}
+		});
+		req.on("error", (err) => reject(err));
+	});
+}
+
+/**
+ * Render the enterNames.html page.
+ * Optionally injects initial player data into a window.__initialPlayers script variable.
+ * @param {ServerResponse} res - The HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @param {Array<{ name: string; score?: number }>} [initialPlayers] - Optional initial players to inject.
+ * @returns {void}
+ */
 export function renderEnterNames(
-  res: ServerResponse,
-  baseDir: string,
-  initialPlayers?: Array<{ name: string; score?: number }>
+	res: ServerResponse,
+	baseDir: string,
+	initialPlayers?: Array<{ name: string; score?: number }>
 ): void {
-  const file = path.join(baseDir, "..", "src", "public", "enterNames.html");
-
-  fs.readFile(file, (err, data) => {
-    if (err) {
-      res.writeHead(500);
-      res.end("Error loading enter names page");
-      return;
-    }
-    let html = data.toString();
-    
-    if (initialPlayers && initialPlayers.length > 0) {
-      const playersJson = JSON.stringify(initialPlayers);
-      const script = `<script>window.__initialPlayers = ${playersJson};</script>`;
-      html = html.replace("</head>", `${script}</head>`);
-    }
-    
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(html);
-  });
+	const file = path.join(baseDir, "..", "src", "public", "enterNames.html");
+	fs.readFile(file, (err, data) => {
+		if (err) {
+			res.writeHead(500);
+			res.end("Error loading enter names page");
+			return;
+		}
+		let html = data.toString();
+		if (initialPlayers && initialPlayers.length > 0) {
+			const playersJson = JSON.stringify(initialPlayers);
+			const script = `<script>window.__initialPlayers = ${playersJson};</script>`;
+			html = html.replace("</head>", `${script}</head>`);
+		}
+		res.writeHead(200, { "Content-Type": "text/html" });
+		res.end(html);
+	});
 }
 
-export function saveName(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-
-  req.on("end", () => {
-    let name = "";
-    try {
-      const parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name empty" }));
-      return;
-    }
-    (async () => {
-      try {
-        const game = getGame();
-        if (game.findPlayerIndexByName(name) !== -1) {
-          res.writeHead(400);
-          res.end(JSON.stringify({ ok: false, error: "Player already exists" }));
-          return;
-        }
-        game.addPlayer(new Player(name));
-        await saveGame(baseDir);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      } catch (err) {
-        res.writeHead(500);
-        res.end(JSON.stringify({ ok: false, error: "Failed to save name" }));
-      }
-    })();
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Add a player to the current game.
+ * Validates and delegates to GameService.addPlayerByName().
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function saveName(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		if (!name) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name empty" }));
+			return;
+		}
+		const result = await GameService.addPlayerByName(baseDir, name);
+		if (!result.ok) {
+			const status = /not found/i.test(result.error || "") ? 404 : 400;
+			res.writeHead(status, { "Content-Type": "application/json" });
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function setGameName(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-
-  req.on("end", () => {
-    let name = "";
-    try {
-      const parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name empty" }));
-      return;
-    }
-
-    try {
-      const game = getGame();
-      game.setName(name);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to set game name" }));
-    }
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Set the game's name.
+ * Validates and delegates to GameService.setGameName().
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function setGameName(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		if (!name) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name empty" }));
+			return;
+		}
+		await GameService.setGameName(baseDir, name);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function setGameType(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-
-  req.on("end", () => {
-    let type = "";
-    try {
-      const parsed = JSON.parse(body || "{}");
-      type = (parsed.type || "").toString().trim();
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!type || (type !== "quiz" && type !== "chinees poepeke")) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid game type" }));
-      return;
-    }
-
-    try {
-      const game = getGame();
-      game.setGameType(type as any);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to set game type" }));
-    }
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Set the game's type.
+ * Validates and delegates to GameService.setGameType().
+ * @param {IncomingMessage} req - HTTP request with JSON body { type: string }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function setGameType(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const type = (parsed.type || "").toString().trim();
+		if (!type) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Type empty" }));
+			return;
+		}
+		await GameService.setGameType(baseDir, type);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function getPlayers(
-  res: ServerResponse,
-  baseDir: string
-): void {
-  if (res.headersSent) return;
-  try {
-    const game = getGame();
-    const players = game.toPlayersWithScores();
-    if (res.headersSent) return;
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(players));
-  } catch (err) {
-    if (res.headersSent) return;
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify([]));
-  }
+/**
+ * Get all players and their scores from the current game.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} [baseDir] - Optional base directory (unused).
+ * @returns {void}
+ */
+export function getPlayers(res: ServerResponse, baseDir?: string): void {
+	try {
+		const players = GameService.getPlayers();
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify(players));
+	} catch (err) {
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify([]));
+	}
 }
 
-export function getPlayerNames(
-  res: ServerResponse,
-  baseDir: string
-): void {
-  if (res.headersSent) return;
-  try {
-    const game = getGame();
-    const players = game.toPlainNames();
-    if (res.headersSent) return;
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(players));
-  } catch (err) {
-    if (res.headersSent) return;
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify([]));
-  }
+/**
+ * Get all player names from the current game.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} [baseDir] - Optional base directory (unused).
+ * @returns {void}
+ */
+export function getPlayerNames(res: ServerResponse, baseDir?: string): void {
+	try {
+		const names = GameService.getPlayerNames();
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify(names));
+	} catch (err) {
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify([]));
+	}
 }
 
-export function deletePlayer(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let name = "";
-    try {
-      const parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name empty" }));
-      return;
-    }
-
-    (async () => {
-      try {
-        const game = getGame();
-        const removed = game.removePlayerByName(name);
-        if (!removed) {
-          res.writeHead(404);
-          res.end(JSON.stringify({ ok: false, error: "Name not found" }));
-          return;
-        }
-        await saveGame(baseDir);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      } catch (err) {
-        res.writeHead(500);
-        res.end(JSON.stringify({ ok: false, error: "Failed to update file" }));
-      }
-    })();
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Delete a player from the current game.
+ * Validates and delegates to GameService.deletePlayerByName().
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function deletePlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		if (!name) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name empty" }));
+			return;
+		}
+		const result = await GameService.deletePlayerByName(baseDir, name);
+		if (!result.ok) {
+			const status = /not found/i.test(result.error || "") ? 404 : 400;
+			res.writeHead(status);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function removeAllPlayers(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  (async () => {
-    try {
-      const game = getGame();
-      game.removeAllPlayers();
-      await saveGame(baseDir);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to remove all players" }));
-    }
-  })();
+/**
+ * Remove all players from the current game.
+ * @param {IncomingMessage} req - HTTP request object.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function removeAllPlayers(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		await GameService.removeAllPlayers(baseDir);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to remove all players" }));
+	}
 }
 
-export function updatePlayerScore(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let name = "";
-    let score: number | undefined;
-    let parsed: any = {};
-    try {
-      parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-      score = typeof parsed.score === "number" ? parsed.score : undefined;
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name || score === undefined) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name and score required" }));
-      return;
-    }
-
-    (async () => {
-      try {
-        const game = getGame();
-        const currentScore = game.getPlayerScore(name);
-        
-        if (game.getGameType() === "chinees poepeke") {
-          const newScore = currentScore + score;
-          if (newScore < 0) {
-            score = -currentScore;
-          }
-        }
-        
-        game.updatePlayerScore(name, score);
-        if (typeof (parsed as any).historyValue === "number") {
-          game.addPlayerHistory(name, (parsed as any).historyValue);
-        }
-        await saveGame(baseDir);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      } catch (err) {
-        res.writeHead(500);
-        res.end(
-          JSON.stringify({ ok: false, error: "Failed to update score" })
-        );
-      }
-    })();
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Update a player's score by adding a delta.
+ * Supports optional history value logging.
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string; score: number; historyValue?: number }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function updatePlayerScore(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		const score = typeof parsed.score === "number" ? parsed.score : undefined;
+		const historyValue = typeof parsed.historyValue === "number" ? parsed.historyValue : undefined;
+		if (!name || score === undefined) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name and score required" }));
+			return;
+		}
+		const result = await GameService.updatePlayerScore(baseDir, name, score, historyValue);
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function setPlayerScore(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let name = "";
-    let score: number | undefined;
-    try {
-      const parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-      score = typeof parsed.score === "number" ? parsed.score : undefined;
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name || score === undefined) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name and score required" }));
-      return;
-    }
-
-    (async () => {
-      try {
-        const game = getGame();
-        game.setPlayerScore(name, score);
-        await saveGame(baseDir);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      } catch (err) {
-        res.writeHead(500);
-        res.end(
-          JSON.stringify({ ok: false, error: "Failed to set score" })
-        );
-      }
-    })();
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Set a player's score to an absolute value.
+ * Validates and delegates to GameService.setPlayerScore().
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string; score: number }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function setPlayerScore(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		const score = typeof parsed.score === "number" ? parsed.score : undefined;
+		if (!name || score === undefined) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name and score required" }));
+			return;
+		}
+		const result = await GameService.setPlayerScore(baseDir, name, score);
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
+/**
+ * List all active games from the db folder.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {void}
+ */
 export function listGames(res: ServerResponse, baseDir: string): void {
-  try {
-    const dbDir = path.join(baseDir, "..", "db");
-    const files = fs.readdirSync(dbDir);
-    const games: string[] = [];
-
-    files.forEach((file) => {
-      if (file.endsWith(".json")) {
-        try {
-          const filePath = path.join(dbDir, file);
-          const data = fs.readFileSync(filePath, "utf8");
-          const gameData = JSON.parse(data);
-          if (gameData.active !== false) {
-            games.push(file.replace(".json", ""));
-          }
-        } catch (e) {
-        }
-      }
-    });
-
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(games));
-  } catch (err) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify([]));
-  }
+	try {
+		const games = GameService.listGames(baseDir);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify(games));
+	} catch (err) {
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify([]));
+	}
 }
 
-export function saveGameInstance(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  (async () => {
-    try {
-      const game = getGame();
-      await saveGame(baseDir);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to save game" }));
-    }
-  })();
+/**
+ * Save the current game instance to file.
+ * @param {IncomingMessage} req - HTTP request object.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function saveGameInstance(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		await GameService.saveGameInstance(baseDir);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to save game" }));
+	}
 }
 
-export function addPlayer(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-
-  req.on("end", () => {
-    let name = "";
-    try {
-      const parsed = JSON.parse(body || "{}");
-      name = (parsed.name || "").toString().trim();
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (!name) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Name empty" }));
-      return;
-    }
-
-    try {
-      const game = getGame();
-      if (game.findPlayerIndexByName(name) !== -1) {
-        res.writeHead(400);
-        res.end(JSON.stringify({ ok: false, error: "Player already exists" }));
-        return;
-      }
-      game.addPlayer(new Player(name));
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to add player" }));
-    }
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Add a player to the current game (wrapper for saveName).
+ * @param {IncomingMessage} req - HTTP request with JSON body { name: string }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function addPlayer(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const name = (parsed.name || "").toString().trim();
+		if (!name) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Name empty" }));
+			return;
+		}
+		const result = await GameService.addPlayerByName(baseDir, name);
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
 
-export function markGameInactive(
-  req: IncomingMessage,
-  res: ServerResponse,
-  baseDir: string
-): void {
-  (async () => {
-    try {
-      const game = getGame();
-      game.setActive(false);
-      await saveGame(baseDir);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to mark game inactive" }));
-    }
-  })();
+/**
+ * Mark the current game as inactive.
+ * @param {IncomingMessage} req - HTTP request object.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function markGameInactive(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		await GameService.markGameInactive(baseDir);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to mark game inactive" }));
+	}
 }
 
+/**
+ * Get the current game's name.
+ * @param {ServerResponse} res - HTTP response object.
+ * @returns {void}
+ */
 export function getGameName(res: ServerResponse): void {
-  try {
-    const game = getGame();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ name: game.getGameName() }));
-  } catch (err) {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Failed to get game name" }));
-  }
+	try {
+		const name = GameService.getGameName();
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ name }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to get game name" }));
+	}
 }
 
+/**
+ * Get the current game's type.
+ * @param {ServerResponse} res - HTTP response object.
+ * @returns {void}
+ */
 export function getGameType(res: ServerResponse): void {
-  try {
-    const game = getGame();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ type: game.getGameType() }));
-  } catch (err) {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Failed to get game type" }));
-  }
+	try {
+		const type = GameService.getGameType();
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ type }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to get game type" }));
+	}
 }
+
+/**
+ * Get the current round number.
+ * @param {ServerResponse} res - HTTP response object.
+ * @returns {void}
+ */
 export function getRound(res: ServerResponse): void {
-  try {
-    const game = getGame();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ round: game.getRound() }));
-  } catch (err) {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Failed to get round" }));
-  }
+	try {
+		const round = GameService.getRound();
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ round }));
+	} catch (err) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: "Failed to get round" }));
+	}
 }
 
-export function setRound(req: IncomingMessage, res: ServerResponse): void {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let round: number | undefined;
-    try {
-      const parsed = JSON.parse(body || "{}");
-      round = typeof parsed.round === "number" ? parsed.round : undefined;
-    } catch (e) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
-      return;
-    }
-
-    if (round === undefined) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ ok: false, error: "Round required" }));
-      return;
-    }
-
-    try {
-      const game = getGame();
-      game.setRound(round);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (err) {
-      res.writeHead(500);
-      res.end(JSON.stringify({ ok: false, error: "Failed to set round" }));
-    }
-  });
-
-  req.on("error", () => {
-    res.writeHead(500);
-    res.end(JSON.stringify({ ok: false, error: "Request error" }));
-  });
+/**
+ * Set the round number.
+ * Validates and delegates to GameService.setRound().
+ * @param {IncomingMessage} req - HTTP request with JSON body { round: number }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function setRound(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const round = typeof parsed.round === "number" ? parsed.round : undefined;
+		if (round === undefined) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "Round required" }));
+			return;
+		}
+		await GameService.setRound(baseDir, round);
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
 }
+
+export default {};
+
+

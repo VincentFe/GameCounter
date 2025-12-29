@@ -3,23 +3,11 @@
   "players": [
     {
       "name": "speler",
-      "score": 25,
-      "history": [
-        1,
-        0,
-        4
-      ]
-    },
-    {
-      "name": "splers",
-      "score": 24,
-      "history": [
-        1,
-        0,
-        15
-      ]
+      "score": 5,
+      "history": []
     }
   ],
   "active": false,
-  "gameType": "chinees poepeke"
+  "gameType": "quiz",
+  "round": 1
 }

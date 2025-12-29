@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { getGame } from "../model/gameManager.js";
+/**
+ * Render the leaderboard page (leaderboard.html).
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {void}
+ */
 export function renderLeaderboard(res, baseDir) {
     const file = path.join(baseDir, "..", "src", "public", "leaderboard.html");
     fs.readFile(file, (err, data) => {
@@ -13,6 +19,11 @@ export function renderLeaderboard(res, baseDir) {
         res.end(data);
     });
 }
+/**
+ * Get leaderboard data: all players sorted by score in descending order.
+ * @param {ServerResponse} res - HTTP response object.
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
 export async function getLeaderboard(res) {
     try {
         const game = getGame();

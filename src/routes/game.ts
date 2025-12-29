@@ -1,1 +1,1 @@
-export * from "../controllers/game.js";
+export {};

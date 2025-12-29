@@ -1,1 +1,1 @@
-export * from "../controllers/enterNames.js";
+export {};

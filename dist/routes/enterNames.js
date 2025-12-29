@@ -1,2 +1,2 @@
-export * from "../controllers/enterNames.js";
+export {};
 //# sourceMappingURL=enterNames.js.map
