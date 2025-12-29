@@ -248,6 +248,12 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
     }
 
+    .player-item.selected-for-delete {
+      border-color: #ff6b6b;
+      box-shadow: 0 6px 18px rgba(255, 107, 107, 0.12);
+      transform: translateY(-2px);
+    }
+
     .player-name {
       font-weight: 600;
       color: #333;
@@ -363,11 +369,11 @@
       </form>
 
       <div class="players-header">
-        <h2>Players List</h2>
-        <button type="button" id="removeAllBtn" class="btn-remove-all" style="display: none;">
-          Remove All
-        </button>
-      </div>
+          <h2>Players List</h2>
+          <button type="button" id="deleteBtn" class="btn-remove-all" style="display: none;">
+            Delete
+          </button>
+        </div>
       <ul id="playerList" class="players-list"></ul>
       <div id="emptyState" class="empty-state" style="display: none;">
         No players added yet. Enter a name above to get started!
@@ -443,24 +449,26 @@
       }
     }
 
-    // Setup remove all button and show it only when there are players
-    function updateRemoveAllButtonVisibility() {
-      const removeAllBtn = document.getElementById("removeAllBtn");
+    // Setup delete button visibility and observer
+    function updateDeleteButtonVisibility() {
+      const deleteBtn = document.getElementById("deleteBtn");
       const playerList = document.getElementById("playerList");
-      if (removeAllBtn) {
-        removeAllBtn.style.display = playerList && playerList.children.length > 0 ? "block" : "none";
+      if (deleteBtn) {
+        deleteBtn.style.display = playerList && playerList.children.length > 0 ? "block" : "none";
       }
     }
 
     // Observe changes to player list and update button visibility
     const observer = new MutationObserver(() => {
-      updateRemoveAllButtonVisibility();
+      updateDeleteButtonVisibility();
     });
 
     document.addEventListener("DOMContentLoaded", () => {
-      const removeAllBtn = document.getElementById("removeAllBtn");
-      if (removeAllBtn) {
-        removeAllBtn.addEventListener("click", removeAllPlayers);
+      const deleteBtn = document.getElementById("deleteBtn");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => {
+          if (typeof toggleDeleteMode === 'function') toggleDeleteMode();
+        });
       }
       
       const playerList = document.getElementById("playerList");
@@ -494,7 +502,7 @@
 
       // Call after DOM is ready
       initializePlayersFromSession();
-      updateRemoveAllButtonVisibility();
+      updateDeleteButtonVisibility();
     });
 
     // Fallback if DOMContentLoaded already fired
