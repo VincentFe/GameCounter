@@ -4,7 +4,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { IncomingMessage, ServerResponse } from "http";
 
-import homeRoute from "./routes/home.js";
+import homeRoute from "./controllers/home.js";
 import {
   renderEnterNames,
   saveName,
@@ -24,11 +24,11 @@ import {
   getRound,
   setRound,
   removeAllPlayers,
-} from "./routes/enterNames.js";
-import { serveStatic } from "./routes/static.js";
-import { renderGamePage } from "./routes/game.js";
-import { renderLeaderboard, getLeaderboard } from "./routes/leaderboard.js";
-import { initializeGame, saveGame, loadGameByName, getGame } from "./gameManager.js";
+} from "./controllers/enterNames.js";
+import { serveStatic } from "./controllers/static.js";
+import { renderGamePage } from "./controllers/game.js";
+import { renderLeaderboard, getLeaderboard } from "./controllers/leaderboard.js";
+import { initializeGame, saveGame, loadGameByName, getGame } from "./model/gameManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

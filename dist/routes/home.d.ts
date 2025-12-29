@@ -1,3 +1,2 @@
-import { ServerResponse } from "http";
-export default function homeRoute(res: ServerResponse, baseDir: string): void;
+export { default } from "../controllers/home.js";
 //# sourceMappingURL=home.d.ts.map

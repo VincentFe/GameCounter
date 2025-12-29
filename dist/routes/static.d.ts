@@ -1,3 +1,2 @@
-import { IncomingMessage, ServerResponse } from "http";
-export declare function serveStatic(req: IncomingMessage, res: ServerResponse, baseDir: string): void;
+export * from "../controllers/static.js";
 //# sourceMappingURL=static.d.ts.map

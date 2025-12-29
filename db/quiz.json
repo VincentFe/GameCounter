@@ -1,0 +1,7 @@
+{
+  "name": "quiz",
+  "players": [],
+  "active": false,
+  "gameType": "quiz",
+  "round": 1
+}
