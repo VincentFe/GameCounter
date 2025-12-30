@@ -2,12 +2,12 @@
   "name": "test",
   "players": [
     {
-      "name": "speler",
-      "score": 5,
+      "name": "plater",
+      "score": 0,
       "history": []
     }
   ],
-  "active": false,
+  "active": true,
   "gameType": "quiz",
-  "round": 1
+  "gameMaster": ""
 }

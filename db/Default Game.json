@@ -1,10 +1,7 @@
 {
   "name": "Default Game",
-  "players": [
-    {
-      "name": "bbbb\nvvv\ntest\nlate\nddd\ntest",
-      "score": 1
-    }
-  ],
-  "active": false
+  "players": [],
+  "active": false,
+  "gameType": "quiz",
+  "gameMaster": ""
 }

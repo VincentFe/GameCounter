@@ -4,20 +4,7 @@
     {
       "name": "soof",
       "score": 0,
-      "history": [
-        0,
-        0,
-        3
-      ]
-    },
-    {
-      "name": "vin",
-      "score": 20,
-      "history": [
-        0,
-        1,
-        1
-      ]
+      "history": []
     }
   ],
   "active": false,

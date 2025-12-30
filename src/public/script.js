@@ -55,6 +55,132 @@ async function loadPlayers() {
 }
 
 // Manage Players loader (names only)
+// Delete-selection mode state
+window.__deleteMode = false;
+window.__selectedToDelete = new Set();
+
+function updateDeleteButtonVisibility() {
+  const deleteBtn = document.getElementById("deleteBtn");
+  if (!deleteBtn) return;
+  deleteBtn.style.display = document.getElementById("playerList")?.children.length > 0 ? "block" : "none";
+  // show count when in delete mode
+  if (window.__deleteMode) {
+    deleteBtn.textContent = window.__selectedToDelete.size > 0 ? `Delete (${window.__selectedToDelete.size})` : "Delete";
+  } else {
+    deleteBtn.textContent = "Delete";
+  }
+}
+
+async function performDeletes() {
+  if (window.__selectedToDelete.size === 0) return;
+  if (!confirm(`Delete ${window.__selectedToDelete.size} selected player(s)?`)) return;
+
+  const names = Array.from(window.__selectedToDelete);
+  for (const n of names) {
+    try {
+      await fetch("/deletePlayer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: n }),
+      });
+    } catch (e) {
+      console.warn("Failed to delete", n, e);
+    }
+  }
+
+  window.__selectedToDelete.clear();
+  window.__deleteMode = false;
+  removeMasterCheckbox();
+  await loadManagePlayers();
+  if (typeof loadPlayers === "function") loadPlayers();
+  if (typeof loadGamePlayers === "function") loadGamePlayers();
+}
+
+function toggleDeleteMode() {
+  if (!window.__deleteMode) {
+    // enter delete-selection mode
+    window.__deleteMode = true;
+    window.__selectedToDelete.clear();
+    renderMasterCheckbox();
+    loadManagePlayers();
+    return;
+  }
+
+  // if we're already in delete mode
+  if (window.__selectedToDelete.size > 0) {
+    // confirm & perform deletes
+    performDeletes();
+  } else {
+    // no selection -> just exit delete mode and remove master checkbox
+    window.__deleteMode = false;
+    removeMasterCheckbox();
+    window.__selectedToDelete.clear();
+    loadManagePlayers();
+  }
+}
+
+function renderMasterCheckbox() {
+  removeMasterCheckbox();
+  const deleteBtn = document.getElementById("deleteBtn");
+  if (!deleteBtn) return;
+  const wrapper = document.createElement("span");
+  wrapper.id = "deleteMasterWrapper";
+  wrapper.style.marginLeft = "8px";
+
+  const toggle = document.createElement("div");
+  toggle.id = "deleteMasterToggle";
+  toggle.className = "select-deselect-toggle";
+  toggle.textContent = "Select/Deselect";
+  toggle.setAttribute("role", "button");
+  toggle.setAttribute("tabindex", "0");
+  
+  let isSelected = false;
+  
+  const updateToggleState = () => {
+    if (isSelected) {
+      toggle.classList.add("selected");
+      toggle.classList.remove("unselected");
+    } else {
+      toggle.classList.add("unselected");
+      toggle.classList.remove("selected");
+    }
+  };
+  
+  updateToggleState();
+  
+  toggle.addEventListener("click", () => {
+    isSelected = !isSelected;
+    const list = document.getElementById("playerList");
+    if (!list) return;
+    window.__selectedToDelete.clear();
+    Array.from(list.children).forEach((li) => {
+      if (isSelected) {
+        li.classList.add("selected-for-delete");
+        const name = li.dataset.name;
+        if (name) window.__selectedToDelete.add(name);
+      } else {
+        li.classList.remove("selected-for-delete");
+      }
+    });
+    updateToggleState();
+    updateDeleteButtonVisibility();
+  });
+  
+  toggle.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle.click();
+    }
+  });
+
+  wrapper.appendChild(toggle);
+  deleteBtn.parentNode.insertBefore(wrapper, deleteBtn);
+}
+
+function removeMasterCheckbox() {
+  const existing = document.getElementById("deleteMasterWrapper");
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+}
 async function loadManagePlayers() {
   const listEl = document.getElementById("playerList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -79,52 +205,81 @@ async function loadManagePlayers() {
       li.style.display = "flex";
       li.style.justifyContent = "space-between";
       li.style.alignItems = "center";
+      li.dataset.name = player;
 
       const nameSpan = document.createElement("span");
       nameSpan.textContent = player;
-      li.appendChild(nameSpan);
 
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.type = "button";
-      delBtn.className = "btn-delete btn-sm";
-      delBtn.dataset.name = player;
-      delBtn.addEventListener("click", async () => {
-        delBtn.disabled = true;
-        try {
-          const r = await fetch("/deletePlayer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: player }),
-          });
-          const data = await r.json();
-          if (r.ok && data.ok) {
-            li.remove();
-            // also update home/game lists if present
-            if (typeof loadPlayers === "function") loadPlayers();
-            if (typeof loadGamePlayers === "function") loadGamePlayers();
-          } else {
-            alert("Failed to delete: " + (data?.error || r.statusText));
-          }
-        } catch (err) {
-          alert("Network error: " + err.message);
-        } finally {
-          delBtn.disabled = false;
+      // Clicking the item selects/deselects it when in delete mode
+      li.addEventListener("click", (ev) => {
+        if (!window.__deleteMode) return;
+        const selected = li.classList.toggle("selected-for-delete");
+        const name = li.dataset.name;
+        if (selected) {
+          if (name) window.__selectedToDelete.add(name);
+        } else {
+          if (name) window.__selectedToDelete.delete(name);
         }
+        // update master checkbox state
+        const master = document.getElementById("deleteMasterCheckbox");
+        if (master) {
+          const list = document.getElementById("playerList");
+          const total = list?.children.length || 0;
+          const selectedCount = window.__selectedToDelete.size;
+          master.checked = selectedCount > 0 && selectedCount === total;
+        }
+        updateDeleteButtonVisibility();
       });
 
-      li.appendChild(delBtn);
+      li.appendChild(nameSpan);
       listEl.appendChild(li);
     });
+    // Update delete button visibility/count after rendering
+    if (typeof updateDeleteButtonVisibility === "function") updateDeleteButtonVisibility();
   } catch (e) {
     console.error("Error loading manage players:", e);
   }
 }
 
 // Call appropriate loader on DOMContentLoaded
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("nameForm")) {
-    loadManagePlayers();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("clear") === "true") {
+        // Clear all players when navigated from start-new-game
+        await fetch("/removeAllPlayers", { method: "POST" });
+        // then load (will show empty list)
+        await loadManagePlayers();
+        return;
+      }
+
+      if (params.get("from") === "leaderboard") {
+        // Initialize players from leaderboard but reset scores/history
+        try {
+          const lb = await fetch("/api/leaderboard");
+          if (lb.ok) {
+            const players = await lb.json();
+            const names = players.map((p) => p.name || p).filter(Boolean);
+            await fetch("/resetPlayersForNewGame", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ names }),
+            });
+          }
+        } catch (e) {
+          console.error("Failed to init from leaderboard:", e);
+        }
+        await loadManagePlayers();
+        return;
+      }
+
+      // Default: just load existing players
+      await loadManagePlayers();
+    } catch (e) {
+      console.error("Error during enterNames init:", e);
+      loadManagePlayers();
+    }
   }
   // Note: /game page players are loaded by game.js
 });
@@ -136,8 +291,8 @@ if (startBtn) {
   startBtn.addEventListener("click", () => {
     const path = window.location.pathname;
     if (path === "/" || path === "") {
-      // from home -> go to enter names
-      window.location.href = "/enterNames";
+      // from home -> go to enter names and clear list
+      window.location.href = "/enterNames?clear=true";
     } else if (path === "/enterNames" || path.startsWith("/enterNames")) {
       // from enter names -> start game
       // only proceed if there are players; otherwise warn

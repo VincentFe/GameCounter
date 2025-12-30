@@ -41,6 +41,7 @@ import {
   getRound,
   setRound,
   removeAllPlayers,
+  resetPlayersForNewGame,
 } from "./controllers/enterNames.js";
 import { serveStatic } from "./controllers/static.js";
 import { renderGamePage } from "./controllers/game.js";
@@ -101,6 +102,11 @@ const server = http.createServer(
     // Remove all players from the current game
     if (method === "POST" && url === "/removeAllPlayers") {
       return removeAllPlayers(req, res, __dirname);
+    }
+
+    // Reset players list for starting a new game (provide names array)
+    if (method === "POST" && url === "/resetPlayersForNewGame") {
+      return resetPlayersForNewGame(req, res, __dirname);
     }
 
     // Update a player's score (add delta)
@@ -174,8 +180,8 @@ const server = http.createServer(
       return homeRoute(res, __dirname);
     }
 
-    // Enter names page
-    if (method === "GET" && url === "/enterNames") {
+    // Enter names page (match pathname so query params are supported)
+    if (method === "GET" && pathname === "/enterNames") {
       return renderEnterNames(res, __dirname);
     }
 

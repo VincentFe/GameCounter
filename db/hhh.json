@@ -1,12 +1,7 @@
 {
   "name": "hhh",
-  "players": [
-    {
-      "name": "gbgg",
-      "score": 0,
-      "history": []
-    }
-  ],
+  "players": [],
   "active": false,
-  "gameType": "chinees poepeke"
+  "gameType": "chinees poepeke",
+  "round": 1
 }

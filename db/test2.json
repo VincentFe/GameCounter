@@ -1,0 +1,22 @@
+{
+  "name": "test2",
+  "players": [
+    {
+      "name": "speler",
+      "score": 11,
+      "history": [
+        1
+      ]
+    },
+    {
+      "name": "gespeels",
+      "score": 0,
+      "history": [
+        1
+      ]
+    }
+  ],
+  "active": false,
+  "gameType": "chinees poepeke",
+  "round": 2
+}
