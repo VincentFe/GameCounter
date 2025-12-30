@@ -1,13 +1,43 @@
 {
+  "id": "164a6666b7f6deb4",
   "name": "test",
   "players": [
     {
-      "name": "plater",
+      "name": "p",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "pp",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "ppp",
       "score": 0,
       "history": []
     }
   ],
+  "groups": [
+    {
+      "id": "657da9fcb1ff0900",
+      "name": "Group 1",
+      "members": [
+        "ppp",
+        "pp"
+      ]
+    },
+    {
+      "id": "68242ed9f25154f1",
+      "name": "Group 2",
+      "members": [
+        "p"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
   "active": true,
   "gameType": "quiz",
-  "gameMaster": ""
+  "grandmasterId": ""
 }

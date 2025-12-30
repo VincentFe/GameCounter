@@ -160,6 +160,98 @@ export async function setPlayerScore(baseDir: string, name: string, score: numbe
 }
 
 /**
+ * Create groups by randomly assigning players into `count` groups.
+ * Distributes players as evenly as possible (some groups may have one extra member).
+ */
+export async function createGroups(baseDir: string, count: number){
+  if (typeof count !== 'number' || count < 1) return { ok: false, error: 'Invalid count' };
+  const game = getGame();
+  // only quiz supports groups
+  if (game.getGameType() === 'chinees poepeke') return { ok: false, error: 'Groups not supported for this game type' };
+
+  const names = game.toPlainNames();
+  // shuffle names
+  for (let i = names.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [names[i], names[j]] = [names[j], names[i]];
+  }
+
+  const groups: any[] = [];
+  const total = names.length;
+  const baseSize = Math.floor(total / count);
+  let remainder = total % count;
+  let idx = 0;
+  for (let g = 0; g < count; g++) {
+    const size = baseSize + (remainder > 0 ? 1 : 0);
+    remainder = Math.max(0, remainder - 1);
+    const members = names.slice(idx, idx + size);
+    idx += size;
+    // create group object simple shape; Group class may be available via import if needed
+    groups.push({ name: `Group ${g + 1}`, members });
+  }
+
+  // set groups on game (convert to Group instances expected by Game.setGroups)
+  // lazy import to avoid circular issues
+  const { default: Group } = await import('./Group.js');
+  const groupInstances = groups.map((g) => new Group(g.name, g.members));
+  game.setGroups(groupInstances);
+  game.setUseGroups(true);
+  await saveGame(baseDir);
+  return { ok: true, groups: groupInstances.map((x) => x.toJSON()) };
+}
+
+/**
+ * Start a new Quiz game where each group is treated as a player.
+ * Replaces the current game instance with a Quiz whose players are the group names.
+ */
+export async function startGameWithGroups(baseDir: string){
+  const game = getGame();
+  console.log('[GameService] startGameWithGroups current game type:', game.getGameType());
+  if (game.getGameType() === 'chinees poepeke') return { ok: false, error: 'Groups not supported for this game type' };
+  const groups = game.getGroups() || [];
+  if (!Array.isArray(groups) || groups.length === 0) return { ok: false, error: 'No groups available' };
+
+  // Simpler approach: modify the existing game instance to use group-named players
+  // Clear existing players and add a player per group (player.name = group.name)
+  game.removeAllPlayers();
+  const newPlayers: Player[] = [];
+  for (const g of groups) {
+    const pname = (g && g.name) ? g.name : (g && g.id) ? g.id : 'Group';
+    const p = new Player(pname);
+    newPlayers.push(p);
+    game.addPlayer(p);
+  }
+  game.setGroups(groups);
+  game.setUseGroups(true);
+  console.log('[GameService] startGameWithGroups replaced players with groups:', newPlayers.map(p=>p.name));
+  await saveGame(baseDir);
+  return { ok: true };
+}
+
+/**
+ * Get groups for current game.
+ */
+export function getGroups(){
+  const game = getGame();
+  return (game.getGroups() || []).map((g: any) => g.toJSON());
+}
+
+/**
+ * Set a group's name by id.
+ */
+export async function setGroupName(baseDir: string, groupId: string, name: string){
+  if (!groupId) return { ok: false, error: 'groupId required' };
+  const game = getGame();
+  const groups = game.getGroups();
+  const idx = groups.findIndex((g) => g.id === groupId);
+  if (idx === -1) return { ok: false, error: 'group not found' };
+  groups[idx].name = name || groups[idx].name;
+  game.setGroups(groups);
+  await saveGame(baseDir);
+  return { ok: true };
+}
+
+/**
  * List all active games from the db folder.
  * Reads all .json files and filters out games marked as inactive.
  * @param {string} baseDir - The base directory (__dirname or equivalent).

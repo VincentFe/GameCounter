@@ -1,14 +1,28 @@
 import fs from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 import Player from "./Player.js";
+import Group from "./Group.js";
+
+/**
+ * Generates a 16-character GUID.
+ * @returns {string} A random 16-character GUID.
+ */
+function generateGUID(): string {
+  return crypto.randomBytes(8).toString("hex");
+}
 
 /**
  * Abstract base class for game instances with player management and state.
- * Manages player roster, game name, and active state. Subclasses define game-specific behavior.
+ * Manages player roster, game name, password, and active state. Subclasses define game-specific behavior.
  */
 export abstract class Game {
+  protected id: string;
   protected players: Player[];
+  protected groups: Group[];
+  protected useGroups: boolean;
   protected name: string;
+  protected password: string;
   protected active: boolean;
 
   /**
@@ -16,14 +30,24 @@ export abstract class Game {
    * @param {Player[]} [players=[]] - Initial list of players.
    * @param {string} [name="Default Game"] - The game name.
    * @param {boolean} [active=true] - Whether the game is currently active.
+   * @param {string} [password=""] - Optional game password.
+   * @param {string} [id] - Optional GUID. If not provided, one is generated.
    */
   constructor(
     players: Player[] = [],
     name: string = "Default Game",
-    active: boolean = true
+    active: boolean = true,
+    password: string = "",
+    id?: string,
+    groups: Group[] = [],
+    useGroups: boolean = false
   ) {
+    this.id = id || generateGUID();
     this.players = players;
+    this.groups = groups;
+    this.useGroups = !!useGroups;
     this.name = name;
+    this.password = password;
     this.active = active;
   }
 
@@ -35,12 +59,77 @@ export abstract class Game {
   abstract getGameType(): string;
 
   /**
+   * Get the game's GUID.
+   * @returns {string} The game's unique identifier.
+   */
+  getId(): string {
+    return this.id;
+  }
+
+  /**
+   * Get the game's password.
+   * @returns {string} The game's password.
+   */
+  getPassword(): string {
+    return this.password;
+  }
+
+  /**
+   * Set the game's password.
+   * @param {string} password - The new password.
+   */
+  setPassword(password: string): void {
+    this.password = password || "";
+  }
+
+  /**
+   * Verify a password against the game's password.
+   * @param {string} password - The password to verify.
+   * @returns {boolean} True if the password matches, false otherwise.
+   */
+  verifyPassword(password: string): boolean {
+    return this.password === password;
+  }
+
+  /**
    * Add a player to the game.
    * @param {Player|string} player - A Player instance or player name string.
    */
   addPlayer(player: Player | string): void {
     const p = player instanceof Player ? player : new Player(player as string);
     this.players.push(p);
+  }
+
+  addGroup(group: Group | string): void {
+    const g = group instanceof Group ? group : new Group(String(group));
+    this.groups.push(g);
+  }
+
+  getGroups(): Group[] {
+    return this.groups;
+  }
+
+  removeGroupById(id: string): boolean {
+    const idx = this.groups.findIndex((g) => g.id === id);
+    if (idx === -1) return false;
+    this.groups.splice(idx, 1);
+    return true;
+  }
+
+  usesGroups(): boolean {
+    return !!this.useGroups;
+  }
+
+  setUseGroups(flag: boolean): void {
+    this.useGroups = !!flag;
+  }
+
+  /**
+   * Replace all groups on this game.
+   * @param {Group[]} groups
+   */
+  setGroups(groups: Group[]): void {
+    this.groups = Array.isArray(groups) ? groups : [];
   }
 
   /**
@@ -117,50 +206,64 @@ export abstract class Game {
 
   /**
    * Get the current round number.
-   * @returns {number} The round number.
+   * Default implementation, overridden by ChineesPoepeke
    */
   getRound(): number {
-    return 0; // Default implementation, overridden by ChineesPoepeke
+    return 0;
   }
 
   /**
    * Set the current round number.
-   * @param {number} round - The round number.
+   * Default implementation, overridden by ChineesPoepeke
    */
   setRound(round: number): void {
-    // Default implementation, overridden by ChineesPoepeke
+    // no-op
   }
 
   /**
    * Serialize the game to a JSON object.
-   * @returns {Object} A JSON object with name, players, active state, and gameType.
    */
-  toJSON(): { name: string; players: any[]; active: boolean; gameType: string } {
+  toJSON(): {
+    id: string;
+    name: string;
+    players: any[];
+    groups: any[];
+    useGroups: boolean;
+    password: string;
+    active: boolean;
+    gameType: string;
+  } {
     return {
+      id: this.id,
       name: this.name,
-      players: this.players.map((p) => p.toJSON()),
+      players: this.players.map((p) => (typeof (p as any)?.toJSON === "function" ? (p as any).toJSON() : { name: p.name })),
+      groups: (this.groups || []).map((g) => (typeof (g as any)?.toJSON === "function" ? (g as any).toJSON() : { name: g.name })),
+      useGroups: !!this.useGroups,
+      password: this.password,
       active: this.active,
       gameType: this.getGameType(),
     };
   }
 
   /**
-   * Deserialize a game from a JSON object. Routes to appropriate subclass.
-   * @param {any} obj - A JSON object with game data.
-   * @returns {Game} A new Game subclass instance (Quiz or ChineesPoepeke).
+   * Deserialize a game from JSON and return the appropriate subclass.
    */
   static fromJSON(obj: any): Game {
-    const players = (obj?.players || []).map(Player.fromJSON);
+    const players = (obj?.players || []).map((p: any) => Player.fromJSON(p));
+    const groups = (obj?.groups || []).map((g: any) => Group.fromJSON(g));
     const name = obj?.name || "Default Game";
     const active = typeof obj?.active === "boolean" ? obj.active : true;
+    const password = obj?.password || "";
+    const id = obj?.id;
     const gameType = obj?.gameType || "quiz";
+    const useGroups = !!obj?.useGroups;
 
     if (gameType === "chinees poepeke") {
       const round = typeof obj?.round === "number" ? obj.round : 1;
-      return new ChineesPoepeke(players, name, active, round);
+      return new ChineesPoepeke(players, name, active, password, id, round);
     } else {
-      const gameMaster = obj?.gameMaster || "";
-      return new Quiz(players, name, active, gameMaster);
+      const grandmasterId = obj?.grandmasterId || "";
+      return new Quiz(players, name, active, password, id, grandmasterId, groups, useGroups);
     }
   }
 
@@ -244,26 +347,32 @@ export abstract class Game {
 }
 
 /**
- * Quiz game type. Extends Game with a gameMaster field.
+ * Quiz game type. Extends Game with a grandmasterId field.
  */
 export class Quiz extends Game {
-  private gameMaster: string;
+  private grandmasterId: string;
 
   /**
    * Create a new quiz game.
    * @param {Player[]} [players=[]] - Initial list of players.
    * @param {string} [name="Default Game"] - The game name.
    * @param {boolean} [active=true] - Whether the game is currently active.
-   * @param {string} [gameMaster=""] - The quiz master's name.
+   * @param {string} [password=""] - Optional game password.
+   * @param {string} [id] - Optional GUID. If not provided, one is generated.
+   * @param {string} [grandmasterId=""] - The GUID of the grandmaster.
    */
   constructor(
     players: Player[] = [],
     name: string = "Default Game",
     active: boolean = true,
-    gameMaster: string = ""
+    password: string = "",
+    id?: string,
+    grandmasterId: string = "",
+    groups: Group[] = [],
+    useGroups: boolean = false
   ) {
-    super(players, name, active);
-    this.gameMaster = gameMaster;
+    super(players, name, active, password, id, groups, useGroups);
+    this.grandmasterId = grandmasterId;
   }
 
   /**
@@ -275,32 +384,46 @@ export class Quiz extends Game {
   }
 
   /**
-   * Get the game master's name.
-   * @returns {string} The game master's name.
+   * Get the grandmaster's GUID.
+   * @returns {string} The grandmaster's GUID.
    */
-  getGameMaster(): string {
-    return this.gameMaster;
+  getGrandmasterId(): string {
+    return this.grandmasterId;
   }
 
   /**
-   * Set the game master's name.
-   * @param {string} gameMaster - The game master's name.
+   * Set the grandmaster's GUID.
+   * @param {string} grandmasterId - The grandmaster's GUID.
    */
-  setGameMaster(gameMaster: string): void {
-    this.gameMaster = gameMaster;
+  setGrandmasterId(grandmasterId: string): void {
+    this.grandmasterId = grandmasterId;
   }
 
   /**
    * Serialize the quiz game to a JSON object.
-   * @returns {Object} A JSON object with name, players, active state, gameType, and gameMaster.
+   * @returns {Object} A JSON object with all game properties including grandmasterId.
    */
-  toJSON(): { name: string; players: any[]; active: boolean; gameType: string; gameMaster: string } {
+  toJSON(): {
+    id: string;
+    name: string;
+    players: any[];
+    groups: any[];
+    useGroups: boolean;
+    password: string;
+    active: boolean;
+    gameType: string;
+    grandmasterId: string;
+  } {
     return {
+      id: this.id,
       name: this.name,
-      players: this.players.map((p) => p.toJSON()),
+      players: this.players.map((p) => (typeof (p as any)?.toJSON === "function" ? (p as any).toJSON() : { name: p.name })),
+      groups: (this.groups || []).map((g) => (typeof (g as any)?.toJSON === "function" ? (g as any).toJSON() : { name: g.name })),
+      useGroups: !!this.useGroups,
+      password: this.password,
       active: this.active,
       gameType: this.getGameType(),
-      gameMaster: this.gameMaster,
+      grandmasterId: this.grandmasterId,
     };
   }
 }
@@ -316,15 +439,19 @@ export class ChineesPoepeke extends Game {
    * @param {Player[]} [players=[]] - Initial list of players.
    * @param {string} [name="Default Game"] - The game name.
    * @param {boolean} [active=true] - Whether the game is currently active.
+   * @param {string} [password=""] - Optional game password.
+   * @param {string} [id] - Optional GUID. If not provided, one is generated.
    * @param {number} [round=1] - The current round number.
    */
   constructor(
     players: Player[] = [],
     name: string = "Default Game",
     active: boolean = true,
+    password: string = "",
+    id?: string,
     round: number = 1
   ) {
-    super(players, name, active);
+    super(players, name, active, password, id);
     this.round = round;
   }
 
@@ -354,12 +481,26 @@ export class ChineesPoepeke extends Game {
 
   /**
    * Serialize the chinees poepeke game to a JSON object.
-   * @returns {Object} A JSON object with name, players, active state, gameType, and round.
+   * @returns {Object} A JSON object with all game properties including round.
    */
-  toJSON(): { name: string; players: any[]; active: boolean; gameType: string; round: number } {
+  toJSON(): {
+    id: string;
+    name: string;
+    players: any[];
+    groups: any[];
+    useGroups: boolean;
+    password: string;
+    active: boolean;
+    gameType: string;
+    round: number;
+  } {
     return {
+      id: this.id,
       name: this.name,
-      players: this.players.map((p) => p.toJSON()),
+      players: this.players.map((p) => (typeof (p as any)?.toJSON === "function" ? (p as any).toJSON() : { name: p.name })),
+      groups: (this.groups || []).map((g) => (typeof (g as any)?.toJSON === "function" ? (g as any).toJSON() : { name: g.name })),
+      useGroups: !!this.useGroups,
+      password: this.password,
       active: this.active,
       gameType: this.getGameType(),
       round: this.round,
