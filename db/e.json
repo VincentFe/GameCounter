@@ -1,0 +1,25 @@
+{
+  "id": "80e52500fb5375dc",
+  "name": "e",
+  "players": [
+    {
+      "name": "e",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "d6a36ad5c25862cd",
+      "name": "Group 1",
+      "members": [
+        "e"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}

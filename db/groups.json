@@ -1,0 +1,38 @@
+{
+  "id": "e33a10415914560e",
+  "name": "groups",
+  "players": [
+    {
+      "name": "Group 1",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "Group 2",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "9a2702441532259b",
+      "name": "Group 1",
+      "members": [
+        "ggg",
+        "g"
+      ]
+    },
+    {
+      "id": "4e52dba18246f904",
+      "name": "Group 2",
+      "members": [
+        "gg"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}

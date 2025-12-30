@@ -1,19 +1,14 @@
 {
-  "id": "3900e7d9065c2652",
-  "name": "test",
+  "id": "97fb161dd514b9af",
+  "name": "t",
   "players": [
     {
-      "name": "game",
+      "name": "pp",
       "score": 0,
       "history": []
     },
     {
-      "name": "playte",
-      "score": 0,
-      "history": []
-    },
-    {
-      "name": "again",
+      "name": "p",
       "score": 0,
       "history": []
     }

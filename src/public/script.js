@@ -699,15 +699,16 @@ if (createGroupsBtn) {
     banner.innerHTML = "";
 
     const label = document.createElement("label");
-    label.textContent = "Number of groups:";
+    label.textContent = "# of groups:";
     label.style.marginRight = "8px";
 
     const input = document.createElement("input");
     input.type = "number";
     input.min = "1";
     input.id = "createGroupsInput";
-    input.placeholder = "# groups";
-    input.style.width = "100px";
+    input.value = "0";
+    input.style.width = "90px";
+    input.style.height = "40px";
     input.style.marginRight = "8px";
     input.className = "group-number-input";
 
@@ -716,14 +717,18 @@ if (createGroupsBtn) {
     confirm.id = "createGroupsConfirmBtn";
     confirm.className = "btn-create-groups";
     confirm.textContent = "Create";
+    confirm.style.marginRight = "8px";
     confirm.style.width = "90px";
+    confirm.style.height = "40px";
 
     const cancel = document.createElement("button");
     cancel.type = "button";
     cancel.id = "createGroupsCancelBtn";
     cancel.className = "btn btn-cancel";
     cancel.textContent = "Cancel";
+    cancel.style.marginRight = "8px";
     cancel.style.width = "90px";
+    cancel.style.height = "40px";
     cancel.addEventListener("click", () => {
       // restore banner
       if (banner.dataset.prevHtml) {
