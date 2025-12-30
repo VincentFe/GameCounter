@@ -1,0 +1,25 @@
+{
+  "id": "6c31e7f4d604645b",
+  "name": "tt",
+  "players": [
+    {
+      "name": "pp",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "f0e0a31742553ef7",
+      "name": "Group 1",
+      "members": [
+        "pp"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}

@@ -1,0 +1,49 @@
+{
+  "id": "c310fab459e5a186",
+  "name": "set",
+  "players": [
+    {
+      "name": "player",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "pp",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "ppp",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "0548a5fb855b5be4",
+      "name": "Group 1",
+      "members": [
+        "ppp"
+      ]
+    },
+    {
+      "id": "05fcf0494e79313a",
+      "name": "Group 2",
+      "members": [
+        "pp"
+      ]
+    },
+    {
+      "id": "5e62ac067e49e3da",
+      "name": "Group 3",
+      "members": [
+        "player"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}

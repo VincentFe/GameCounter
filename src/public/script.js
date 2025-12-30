@@ -384,7 +384,9 @@ function updateStartWithGroupsVisibility(groups){
     const allNamed = groups.every(g => typeof g.name === 'string' && g.name.trim().length > 0);
     btn.style.display = allNamed ? '' : 'none';
     btn.disabled = !allNamed;
-  }catch(e){ }
+  }catch(e){ 
+    console.error('Failed to update start-with-groups button visibility', e);
+  }
 }
 
 // Toggle groups visibility helper (used when game type changes)
@@ -406,36 +408,38 @@ document.addEventListener('DOMContentLoaded', () => {
       setGroupsVisibility(val === 'quiz');
     });
   }
+});
 
-  // Start with groups button
-  const startBtnGroups = document.getElementById('startWithGroupsBtn');
-  if (startBtnGroups) {
-    startBtnGroups.addEventListener('click', async () => {
-      // double-check groups names before starting
-      try{
-        const respG = await fetch('/groups');
-        if (!respG.ok) { alert('Unable to verify groups'); return; }
-        const groups = await respG.json();
-        const allNamed = groups.every(g => typeof g.name === 'string' && g.name.trim().length > 0);
-        if (!allNamed) { alert('Please set all group names before starting a game with groups.'); return; }
-        const ok = confirm('Start a Quiz with these groups as players?');
-        if (!ok) return;
-      } catch (e) { alert('Network error: ' + e.message); return; }
+// Use event delegation for start-with-groups button (delegates to document since button may be recreated)
+document.addEventListener('click', async (e) => {
+  const startBtnGroups = e.target.closest('#startWithGroupsBtn');
+  if (!startBtnGroups) return;
+  console.log('Start-with-groups button clicked');
+  
+  // double-check groups names before starting
+  try{
+    console.log('Verifying group names before starting game with groups');
+    const respG = await fetch('/groups');
+    if (!respG.ok) { alert('Unable to verify groups'); return; }
+    const groups = await respG.json();
+    const allNamed = groups.every(g => typeof g.name === 'string' && g.name.trim().length > 0);
+    if (!allNamed) { alert('Please set all group names before starting a game with groups.'); return; }
+    const ok = confirm('Start a Quiz with these groups as players?');
+    if (!ok) return;
+  } catch (e) { alert('Network error: ' + e.message); console.error(e); return; }
 
-      startBtnGroups.disabled = true;
-      try {
-        const resp = await fetch('/startGameWithGroups', { method: 'POST' });
-        const d = resp.ok ? await resp.json() : null;
-        if (resp.ok && d && d.ok) {
-          // navigate to game page
-          window.location.href = '/game';
-          return;
-        }
-        alert('Failed to start game with groups');
-      } catch (e) { alert('Network error: ' + e.message); }
-      finally { startBtnGroups.disabled = false; }
-    });
-  }
+  startBtnGroups.disabled = true;
+  try {
+    const resp = await fetch('/startGameWithGroups', { method: 'POST' });
+    const d = resp.ok ? await resp.json() : null;
+    if (resp.ok && d && d.ok) {
+      // navigate to game page
+      window.location.href = '/game';
+      return;
+    }
+    alert('Failed to start game with groups');
+  } catch (e) { alert('Network error: ' + e.message); console.error(e); }
+  finally { startBtnGroups.disabled = false; }
 });
 
 

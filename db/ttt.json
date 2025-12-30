@@ -1,32 +1,37 @@
 {
-  "id": "bedc2eab4ec3f6eb",
-  "name": "test",
+  "id": "d6f18477b1793733",
+  "name": "ttt",
   "players": [
     {
-      "name": "Group 1",
-      "score": 4,
+      "name": "tt",
+      "score": 0,
       "history": []
     },
     {
-      "name": "Group 2",
-      "score": -2,
+      "name": "t",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "ttt",
+      "score": 0,
       "history": []
     }
   ],
   "groups": [
     {
-      "id": "cfcd321d2cf2b000",
+      "id": "e3f8846d49cc3310",
       "name": "Group 1",
       "members": [
-        "pp",
-        "pppp"
+        "t",
+        "tt"
       ]
     },
     {
-      "id": "bab2cbad12ace571",
+      "id": "81f7b7a88d7d6361",
       "name": "Group 2",
       "members": [
-        "ppp"
+        "ttt"
       ]
     }
   ],
