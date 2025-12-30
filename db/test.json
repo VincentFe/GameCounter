@@ -2,12 +2,12 @@
   "name": "test",
   "players": [
     {
-      "name": "geteste",
+      "name": "plater",
       "score": 0,
       "history": []
     }
   ],
-  "active": false,
+  "active": true,
   "gameType": "quiz",
   "gameMaster": ""
 }

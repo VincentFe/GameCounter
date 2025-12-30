@@ -127,17 +127,34 @@ function renderMasterCheckbox() {
   wrapper.id = "deleteMasterWrapper";
   wrapper.style.marginLeft = "8px";
 
-  const cb = document.createElement("input");
-  cb.type = "checkbox";
-  cb.id = "deleteMasterCheckbox";
-  cb.style.verticalAlign = "middle";
-  cb.addEventListener("change", (e) => {
-    const checked = e.target.checked;
+  const toggle = document.createElement("div");
+  toggle.id = "deleteMasterToggle";
+  toggle.className = "select-deselect-toggle";
+  toggle.textContent = "Select/Deselect";
+  toggle.setAttribute("role", "button");
+  toggle.setAttribute("tabindex", "0");
+  
+  let isSelected = false;
+  
+  const updateToggleState = () => {
+    if (isSelected) {
+      toggle.classList.add("selected");
+      toggle.classList.remove("unselected");
+    } else {
+      toggle.classList.add("unselected");
+      toggle.classList.remove("selected");
+    }
+  };
+  
+  updateToggleState();
+  
+  toggle.addEventListener("click", () => {
+    isSelected = !isSelected;
     const list = document.getElementById("playerList");
     if (!list) return;
     window.__selectedToDelete.clear();
     Array.from(list.children).forEach((li) => {
-      if (checked) {
+      if (isSelected) {
         li.classList.add("selected-for-delete");
         const name = li.dataset.name;
         if (name) window.__selectedToDelete.add(name);
@@ -145,16 +162,18 @@ function renderMasterCheckbox() {
         li.classList.remove("selected-for-delete");
       }
     });
+    updateToggleState();
     updateDeleteButtonVisibility();
   });
+  
+  toggle.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle.click();
+    }
+  });
 
-  const label = document.createElement("label");
-  label.htmlFor = "deleteMasterCheckbox";
-  label.textContent = "Select/Deselect";
-  label.style.marginLeft = "6px";
-
-  wrapper.appendChild(cb);
-  wrapper.appendChild(label);
+  wrapper.appendChild(toggle);
   deleteBtn.parentNode.insertBefore(wrapper, deleteBtn);
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "Unnamed Game",
   "players": [],
-  "active": false,
+  "active": true,
   "gameType": "quiz",
   "gameMaster": ""
 }
