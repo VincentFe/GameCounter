@@ -1,7 +1,11 @@
 {
+  "id": "80e52500fb5375dc",
   "name": "Unnamed Game",
   "players": [],
+  "groups": [],
+  "useGroups": false,
+  "password": "",
   "active": true,
   "gameType": "quiz",
-  "gameMaster": ""
+  "grandmasterId": ""
 }

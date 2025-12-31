@@ -284,6 +284,164 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Note: /game page players are loaded by game.js
 });
 
+  // Fetch and render current groups into #groupsList
+  async function renderGroups(){
+    const container = document.getElementById('groupsList');
+    if (!container) return;
+    try {
+      const resp = await fetch('/groups');
+      if (!resp.ok) { container.innerHTML = ''; return; }
+      const groups = await resp.json();
+      container.innerHTML = '';
+      groups.forEach((g) => {
+        const box = document.createElement('div');
+        box.className = 'group-box';
+
+        const header = document.createElement('div');
+        header.className = 'group-header-row';
+
+        const nameInput = document.createElement('input');
+        nameInput.className = 'group-name-input';
+        nameInput.value = g.name || '';
+
+        const setBtn = document.createElement('button');
+        setBtn.className = 'group-set-button';
+        setBtn.textContent = 'Set';
+        setBtn.addEventListener('click', async () => {
+          setBtn.disabled = true;
+          try {
+            const r = await fetch('/setGroupName', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: g.id, name: nameInput.value }) });
+            const d = await r.json();
+            if (!r.ok || !d.ok) {
+              alert('Failed to set group name: ' + (d.error || r.statusText));
+              setBtn.disabled = false;
+              return;
+            }
+            // on success: gray out and disable the input and button
+            nameInput.disabled = true;
+            setBtn.disabled = true;
+            // ensure visual state updated
+            nameInput.classList.add('group-name-set');
+          } catch (e) { alert('Network error: ' + e.message); setBtn.disabled = false; }
+        });
+
+        header.appendChild(nameInput);
+        header.appendChild(setBtn);
+        box.appendChild(header);
+
+        const membersDiv = document.createElement('div');
+        membersDiv.className = 'group-members';
+        (g.members || []).forEach((m) => {
+          const mEl = document.createElement('div');
+          mEl.className = 'group-member';
+          mEl.textContent = m;
+          membersDiv.appendChild(mEl);
+        });
+        box.appendChild(membersDiv);
+
+        container.appendChild(box);
+      });
+      // After rendering groups, update start-with-groups button visibility
+      updateStartWithGroupsVisibility(groups);
+    } catch (e) {
+      console.error('Failed to render groups', e);
+    }
+  }
+
+  // Render groups on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    renderGroups();
+      // set initial visibility based on game type
+      (async () => {
+        try {
+          const resp = await fetch('/getGameType');
+          if (resp.ok) {
+            const d = await resp.json();
+            const t = d?.type || '';
+            const show = t === 'quiz';
+            const groupsHeader = document.querySelectorAll('.groups-header');
+            const groupsList = document.getElementById('groupsList');
+            const banner = document.getElementById('groupsBannerCenter');
+            if (groupsHeader) groupsHeader.forEach(h => { h.style.display = show ? '' : 'none'; });
+            if (groupsList) groupsList.style.display = show ? '' : 'none';
+            if (banner) banner.style.display = show ? '' : 'none';
+          }
+        } catch (e) { }
+      })();
+  });
+
+/**
+ * Show the start-with-groups button only when all groups have non-empty names.
+ */
+function updateStartWithGroupsVisibility(groups){
+  try{
+    const btn = document.getElementById('startWithGroupsBtn');
+    if (!btn) return;
+    if (!groups || !Array.isArray(groups) || groups.length === 0){
+      btn.style.display = 'none';
+      return;
+    }
+    const allNamed = groups.every(g => typeof g.name === 'string' && g.name.trim().length > 0);
+    btn.style.display = allNamed ? '' : 'none';
+    btn.disabled = !allNamed;
+  }catch(e){ 
+    console.error('Failed to update start-with-groups button visibility', e);
+  }
+}
+
+// Toggle groups visibility helper (used when game type changes)
+function setGroupsVisibility(show){
+  const groupsHeader = document.querySelectorAll('.groups-header');
+  const groupsList = document.getElementById('groupsList');
+  const banner = document.getElementById('groupsBannerCenter');
+  if (groupsHeader) groupsHeader.forEach(h => { h.style.display = show ? '' : 'none'; });
+  if (groupsList) groupsList.style.display = show ? '' : 'none';
+  if (banner) banner.style.display = show ? '' : 'none';
+}
+
+// Listen for gameType selector changes to show/hide groups
+document.addEventListener('DOMContentLoaded', () => {
+  const gt = document.getElementById('gameType');
+  if (gt) {
+    gt.addEventListener('change', (e) => {
+      const val = (e.target.value || '').toString();
+      setGroupsVisibility(val === 'quiz');
+    });
+  }
+});
+
+// Use event delegation for start-with-groups button (delegates to document since button may be recreated)
+document.addEventListener('click', async (e) => {
+  const startBtnGroups = e.target.closest('#startWithGroupsBtn');
+  if (!startBtnGroups) return;
+  console.log('Start-with-groups button clicked');
+  
+  // double-check groups names before starting
+  try{
+    console.log('Verifying group names before starting game with groups');
+    const respG = await fetch('/groups');
+    if (!respG.ok) { alert('Unable to verify groups'); return; }
+    const groups = await respG.json();
+    const allNamed = groups.every(g => typeof g.name === 'string' && g.name.trim().length > 0);
+    if (!allNamed) { alert('Please set all group names before starting a game with groups.'); return; }
+    const ok = confirm('Start a Quiz with these groups as players?');
+    if (!ok) return;
+  } catch (e) { alert('Network error: ' + e.message); console.error(e); return; }
+
+  startBtnGroups.disabled = true;
+  try {
+    const resp = await fetch('/startGameWithGroups', { method: 'POST' });
+    const d = resp.ok ? await resp.json() : null;
+    if (resp.ok && d && d.ok) {
+      // navigate to game page
+      window.location.href = '/game';
+      return;
+    }
+    alert('Failed to start game with groups');
+  } catch (e) { alert('Network error: ' + e.message); console.error(e); }
+  finally { startBtnGroups.disabled = false; }
+});
+
 
 // HOME / ENTER NAMES START BUTTON: navigate according to page
 const startBtn = document.getElementById("startGameBtn");
@@ -527,5 +685,101 @@ if (createBtn) {
 if (cancelBtn) {
   cancelBtn.addEventListener("click", () => {
     window.location.href = "/";
+  });
+}
+
+// Groups UI: Create Groups button -> shows input + Create/Cancel
+const createGroupsBtn = document.getElementById("createGroupsBtn");
+if (createGroupsBtn) {
+  createGroupsBtn.addEventListener("click", () => {
+    const banner = document.getElementById("groupsBannerCenter");
+    if (!banner) return;
+    // save previous HTML to restore on cancel
+    if (!banner.dataset.prevHtml) banner.dataset.prevHtml = banner.innerHTML;
+    banner.innerHTML = "";
+
+    const label = document.createElement("label");
+    label.textContent = "# of groups:";
+    label.style.marginRight = "8px";
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "1";
+    input.id = "createGroupsInput";
+    input.value = "0";
+    input.style.width = "90px";
+    input.style.height = "40px";
+    input.style.marginRight = "8px";
+    input.className = "group-number-input";
+
+    const confirm = document.createElement("button");
+    confirm.type = "button";
+    confirm.id = "createGroupsConfirmBtn";
+    confirm.className = "btn-create-groups";
+    confirm.textContent = "Create";
+    confirm.style.marginRight = "8px";
+    confirm.style.width = "90px";
+    confirm.style.height = "40px";
+
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.id = "createGroupsCancelBtn";
+    cancel.className = "btn btn-cancel";
+    cancel.textContent = "Cancel";
+    cancel.style.marginRight = "8px";
+    cancel.style.width = "90px";
+    cancel.style.height = "40px";
+    cancel.addEventListener("click", () => {
+      // restore banner
+      if (banner.dataset.prevHtml) {
+        banner.innerHTML = banner.dataset.prevHtml;
+        delete banner.dataset.prevHtml;
+        // reattach event handler by reloading script's listener
+        setTimeout(() => {
+          const recreated = document.getElementById("createGroupsBtn");
+          if (recreated) recreated.addEventListener("click", () => window.location.reload());
+        }, 20);
+      }
+    });
+
+    // confirm behavior: call server to create groups
+    confirm.addEventListener("click", async () => {
+      const val = parseInt(input.value, 10);
+      if (!val || val < 1) {
+        alert('Please enter a valid number of groups');
+        input.focus();
+        return;
+      }
+      confirm.disabled = true;
+      try {
+        const resp = await fetch('/createGroups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count: val })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          // restore banner to original state
+          if (banner.dataset.prevHtml) {
+            banner.innerHTML = banner.dataset.prevHtml;
+            delete banner.dataset.prevHtml;
+          }
+          // render groups
+          renderGroups();
+        } else {
+          alert('Failed to create groups: ' + (data.error || resp.statusText));
+        }
+      } catch (e) {
+        alert('Network error: ' + e.message);
+      } finally {
+        confirm.disabled = false;
+      }
+    });
+
+    banner.appendChild(label);
+    banner.appendChild(input);
+    banner.appendChild(confirm);
+    banner.appendChild(cancel);
+    input.focus();
   });
 }

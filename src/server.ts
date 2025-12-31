@@ -27,6 +27,10 @@ import {
   saveName,
   setGameName,
   setGameType,
+  startGameWithGroups,
+  createGroups,
+  getGroups,
+  setGroupName,
   getPlayers,
   deletePlayer,
   updatePlayerScore,
@@ -129,6 +133,11 @@ const server = http.createServer(
       return getPlayerNames(res, __dirname);
     }
 
+    // Get groups
+    if (method === "GET" && url === "/groups") {
+      return getGroups(res);
+    }
+
     // List all active games from db folder
     if (method === "GET" && url === "/listGames") {
       return listGames(res, __dirname);
@@ -157,6 +166,21 @@ const server = http.createServer(
     // Save the current game instance to file
     if (method === "POST" && url === "/saveGame") {
       return saveGameInstance(req, res, __dirname);
+    }
+
+    // Create groups
+    if (method === "POST" && url === "/createGroups") {
+      return createGroups(req, res, __dirname);
+    }
+
+    // Set group name
+    if (method === "POST" && url === "/setGroupName") {
+      return setGroupName(req, res, __dirname);
+    }
+
+    // Start a quiz using groups as players
+    if (method === "POST" && url === "/startGameWithGroups") {
+      return startGameWithGroups(req, res, __dirname);
     }
 
     // Add a player (alias for /saveName)

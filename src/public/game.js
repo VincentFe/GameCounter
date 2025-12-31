@@ -395,7 +395,7 @@ async function validateRound() {
     console.error("Error validating round:", e);
     alert("Error validating round");
   }
-}
+
   if (selected) {
     selectedPlayers.add(name);
   } else {

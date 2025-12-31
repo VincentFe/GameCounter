@@ -464,6 +464,97 @@ export async function resetPlayersForNewGame(req: IncomingMessage, res: ServerRe
 	}
 }
 
+/**
+ * Create groups endpoint.
+ * Body: { count: number }
+ */
+export async function createGroups(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const count = typeof parsed.count === 'number' ? parsed.count : Number(parsed.count);
+		if (!count || isNaN(count) || count < 1) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: 'Invalid count' }));
+			return;
+		}
+		const result = await GameService.createGroups(baseDir, Number(count));
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ ok: true, groups: result.groups }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || 'Invalid JSON' }));
+	}
+}
+
+/**
+ * Return groups for current game.
+ */
+export function getGroups(res: ServerResponse): void {
+	try {
+		const groups = GameService.getGroups();
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify(groups));
+	} catch (err) {
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify([]));
+	}
+}
+
+/**
+ * Set a group's name.
+ * Body: { id: string, name: string }
+ */
+export async function setGroupName(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const id = (parsed.id || '').toString();
+		const name = (parsed.name || '').toString();
+		if (!id) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: 'id required' }));
+			return;
+		}
+		const result = await GameService.setGroupName(baseDir, id, name);
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || 'Invalid JSON' }));
+	}
+}
+
+/**
+ * Start a quiz game using existing groups as players.
+ * POST /startGameWithGroups
+ */
+export async function startGameWithGroups(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		console.log('[enterNames] startGameWithGroups called');
+		const result = await GameService.startGameWithGroups(baseDir);
+		console.log('[enterNames] startGameWithGroups result:', result);
+		if (!result.ok) {
+			res.writeHead(400, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: err.message || 'Failed to start game with groups' }));
+	}
+}
+
 export default {};
 
 

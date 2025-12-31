@@ -1,0 +1,27 @@
+{
+  "id": "ce81a1a00d124c3a",
+  "name": "aa",
+  "players": [
+    {
+      "name": "aa",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "aaa",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "a",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [],
+  "useGroups": false,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}

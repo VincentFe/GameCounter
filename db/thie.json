@@ -1,0 +1,61 @@
+{
+  "id": "36ac8cc628b0df53",
+  "name": "thie",
+  "players": [
+    {
+      "name": "try",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "making",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "grouops",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "of",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "these",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "players",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "5713bf4ce7f630c5",
+      "name": "Grou  1 ",
+      "members": [
+        "of",
+        "players",
+        "grouops"
+      ]
+    },
+    {
+      "id": "fc8d87f116808452",
+      "name": "Groupt",
+      "members": [
+        "try",
+        "making",
+        "these"
+      ]
+    }
+  ],
+  "useGroups": true,
+  "password": "",
+  "active": true,
+  "gameType": "quiz",
+  "grandmasterId": ""
+}
