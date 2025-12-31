@@ -1,11 +1,18 @@
 {
-  "id": "c9ba178cb0e473d1",
   "name": "try",
-  "players": [],
-  "groups": [],
-  "useGroups": false,
-  "password": "",
-  "active": true,
+  "players": [
+    {
+      "name": "please",
+      "score": 0,
+      "history": []
+    },
+    {
+      "name": "do",
+      "score": 0,
+      "history": []
+    }
+  ],
+  "active": false,
   "gameType": "quiz",
-  "grandmasterId": ""
+  "gameMaster": ""
 }

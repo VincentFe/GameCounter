@@ -3,25 +3,12 @@
   "name": "test",
   "players": [
     {
-      "name": "game",
-      "score": 0,
-      "history": []
-    },
-    {
-      "name": "playte",
-      "score": 0,
-      "history": []
-    },
-    {
-      "name": "again",
+      "name": "plater",
       "score": 0,
       "history": []
     }
   ],
-  "groups": [],
-  "useGroups": false,
-  "password": "",
   "active": true,
   "gameType": "quiz",
-  "grandmasterId": ""
+  "gameMaster": ""
 }

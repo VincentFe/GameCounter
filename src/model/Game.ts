@@ -92,6 +92,13 @@ export abstract class Game {
   }
 
   /**
+   * Get the game type as a string identifier.
+   * @abstract
+   * @returns {string} The game type.
+   */
+  abstract getGameType(): string;
+
+  /**
    * Add a player to the game.
    * @param {Player|string} player - A Player instance or player name string.
    */
