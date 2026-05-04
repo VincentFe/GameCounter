@@ -53,6 +53,41 @@
       margin-bottom: 25px;
     }
 
+    .game-info-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .game-info-card {
+      flex: 1 1 220px;
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .game-info-card label {
+      display: block;
+      font-size: 0.95em;
+      color: #666;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .game-info-card input,
+    .game-info-card select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #f0f2f6;
+      color: #333;
+      font-weight: 600;
+      cursor: not-allowed;
+    }
+
     .input-row {
       display: flex;
       gap: 10px;
@@ -408,6 +443,40 @@
       color: #999;
     }
 
+    .add-players-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .add-player-section {
+      flex: 1 1 280px;
+    }
+
+    .add-player-section label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 1.05em;
+    }
+
+    .add-player-section .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .add-player-section input,
+    .add-player-section select {
+      flex: 1;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
     @media (max-width: 600px) {
       header h1 {
         font-size: 1.8em;
@@ -419,6 +488,10 @@
 
       .btn {
         width: 100%;
+      }
+
+      .add-players-row {
+        flex-direction: column;
       }
     }
   </style>
@@ -432,29 +505,6 @@
 
     <div class="content">
       <form id="nameForm" onsubmit="return false;">
-        <div class="form-group">
-          <label for="gameName">Game Name:</label>
-          <div class="input-row">
-            <input
-              type="text"
-              id="gameName"
-              autocomplete="off"
-              placeholder="Enter a game name..."
-            />
-            <button type="button" id="setGameBtn" class="btn-add">
-              Set
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="gameType">Game Type:</label>
-          <select id="gameType">
-            <option value="quiz">Quiz</option>
-            <option value="chinees poepeke">Chinees Poepeke</option>
-          </select>
-        </div>
-
         <div class="form-controls">
           <button type="button" id="startGameBtn" class="btn btn-create">
             Start Game
@@ -464,19 +514,54 @@
           </button>
         </div>
 
-        <div class="form-group">
-          <label for="playerName">Player Name:</label>
-          <div class="input-row">
+        <div class="game-info-row">
+          <div class="game-info-card">
+            <label for="gameName">Game Name</label>
             <input
               type="text"
-              id="playerName"
+              id="gameName"
               autocomplete="off"
-              placeholder="Enter a player name..."
-              required
+              placeholder="Selected game name"
+              disabled
             />
-            <button type="button" id="createBtn" class="btn-add">
-              Add
-            </button>
+          </div>
+
+          <div class="game-info-card">
+            <label for="gameType">Game Type</label>
+            <select id="gameType" disabled>
+              <option value="quiz">Quiz</option>
+              <option value="chinees poepeke">Chinees Poepeke</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="add-players-row">
+          <div class="add-player-section">
+            <label for="playerName">Player Name:</label>
+            <div class="input-row">
+              <input
+                type="text"
+                id="playerName"
+                autocomplete="off"
+                placeholder="Enter a player name..."
+                required
+              />
+              <button type="button" id="createBtn" class="btn-add">
+                Add
+              </button>
+            </div>
+          </div>
+
+          <div class="add-player-section">
+            <label for="existingUserSelect">Add Player from Existing Users</label>
+            <div class="input-row">
+              <select id="existingUserSelect">
+                <option value="">Loading users...</option>
+              </select>
+              <button type="button" id="addExistingUserBtn" class="btn-add">
+                Add Existing
+              </button>
+            </div>
           </div>
         </div>
 

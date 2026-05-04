@@ -92,13 +92,6 @@ export abstract class Game {
   }
 
   /**
-   * Get the game type as a string identifier.
-   * @abstract
-   * @returns {string} The game type.
-   */
-  abstract getGameType(): string;
-
-  /**
    * Add a player to the game.
    * @param {Player|string} player - A Player instance or player name string.
    */
@@ -207,6 +200,25 @@ export abstract class Game {
    */
   removeAllPlayers(): void {
     this.players = [];
+  }
+
+  /**
+   * Reorder players based on a new order of names.
+   * @param {string[]} newOrder - Array of player names in the desired order.
+   * @returns {boolean} True if reordered successfully, false if any name not found.
+   */
+  reorderPlayers(newOrder: string[]): boolean {
+    if (!Array.isArray(newOrder) || newOrder.length !== this.players.length) {
+      return false;
+    }
+    const reordered: Player[] = [];
+    for (const name of newOrder) {
+      const idx = this.findPlayerIndexByName(name);
+      if (idx === -1) return false;
+      reordered.push(this.players[idx]);
+    }
+    this.players = reordered;
+    return true;
   }
 
 

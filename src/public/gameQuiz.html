@@ -148,6 +148,17 @@
       box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
     }
 
+    .player-card.dragging {
+      opacity: 0.5;
+      transform: rotate(5deg);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .player-card.drag-over {
+      border-color: #28a745;
+      background: #f8fff8;
+    }
+
     .player-checkbox {
       display: none;
     }
@@ -423,6 +434,7 @@
   <div class="container">
     <header>
       <h1 id="gameTitle">Quiz Game</h1>
+      <button class="header-btn" onclick="logout()">Logout</button>
     </header>
 
     <div class="controls">

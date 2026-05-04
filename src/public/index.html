@@ -297,6 +297,35 @@
       font-size: 1.05em;
     }
 
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .user-table th,
+    .user-table td {
+      padding: 12px 15px;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    .user-table th {
+      background: #f3f4f6;
+      color: #34495e;
+    }
+
+    .user-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .user-list-title {
+      margin-top: 30px;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      color: #333;
+    }
+
     footer {
       position: fixed;
       bottom: 20px;
@@ -366,11 +395,50 @@
     <header>
       <h1>GameCounter</h1>
       <p>Track your game scores easily</p>
+      <button class="header-btn" onclick="logout()">Logout</button>
     </header>
 
     <div class="controls">
       <button id="startGameBtn" class="btn btn-primary">Start New Game</button>
       <button id="loadGameBtn" class="btn btn-secondary" type="button">Load Game</button>
+    </div>
+
+    <div id="adminSection" class="content" style="display: none;">
+      <h2>Admin Panel</h2>
+      <div class="admin-controls">
+        <h3>Create New User</h3>
+        <form id="createUserForm">
+          <div style="margin-bottom: 15px;">
+            <input type="text" id="newUsername" placeholder="Username" required style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <input type="password" id="newPassword" placeholder="Password" required style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <select id="newUserRole" style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              <option value="user">User</option>
+              <option value="grandmaster">Grandmaster</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Create User</button>
+          </div>
+        </form>
+        <div id="createUserMessage" style="margin-top: 10px;"></div>
+
+        <div id="userListSection">
+          <h3 class="user-list-title">Existing Users</h3>
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Role</th>
+                <th>GUID</th>
+              </tr>
+            </thead>
+            <tbody id="userListBody">
+              <tr>
+                <td colspan="3">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+          <div id="noUsersMessage" style="margin-top: 12px; display: none; color: #555;">No users found.</div>
+        </div>
+      </div>
     </div>
 
     <div id="gameSelectionModal" class="modal" style="display: none;">
@@ -389,6 +457,32 @@
         <div class="modal-footer">
           <button type="button" id="continueGameBtn" class="btn btn-primary" disabled>Continue Game</button>
           <button type="button" class="btn btn-secondary" onclick="closeGameSelection()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameSetupModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>New Game Setup</h2>
+          <button type="button" class="modal-close" onclick="closeGameSetup()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="setupGameName">Game Name</label>
+            <input id="setupGameName" type="text" placeholder="Enter a game name..." style="width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px;" />
+          </div>
+          <div class="form-group">
+            <label for="setupGameType">Game Type</label>
+            <select id="setupGameType" style="width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; background: white; color: #333; font-weight: 600;">
+              <option value="quiz">Quiz</option>
+              <option value="chinees poepeke">Chinees Poepeke</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="gameSetupOkBtn" class="btn btn-primary">OK</button>
+          <button type="button" id="gameSetupCancelBtn" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
     </div>

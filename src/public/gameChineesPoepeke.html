@@ -209,6 +209,41 @@
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
+.chinees-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-left: 8px;
+      flex-shrink: 0;
+
+      border: none;
+      border-radius: 6px;
+      background: #64b5f6;
+      color: white;
+      font-size: 1.2em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btn-triangle:hover {
+      background: #42a5f5;
+      transform: scale(1.02);
+    }
+
+    .btn-triangle:active {
+      transform: scale(0.98);
+    }
+
+    .btn-triangle:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .chinees-btn {
       padding: 6px 12px;
       border: 2px solid transparent;
@@ -456,6 +491,11 @@
 
       .chinees-actions {
         flex-wrap: wrap;
+      }
+
+.chinees-wrapper {
+        margin-left: 0;
+        margin-top: 8px;
       }
     }
   </style>

@@ -160,6 +160,21 @@ export async function setPlayerScore(baseDir: string, name: string, score: numbe
 }
 
 /**
+ * Reorder players in the current game.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @param {string[]} newOrder - Array of player names in the desired order.
+ * @returns {Promise<{ ok: boolean; error?: string }>} Success status and optional error message.
+ */
+export async function reorderPlayers(baseDir: string, newOrder: string[]){
+  if (!Array.isArray(newOrder)) return { ok: false, error: "New order must be an array" };
+  const game = getGame();
+  const success = game.reorderPlayers(newOrder);
+  if (!success) return { ok: false, error: "Invalid player order" };
+  await saveGame(baseDir);
+  return { ok: true };
+}
+
+/**
  * Create groups by randomly assigning players into `count` groups.
  * Distributes players as evenly as possible (some groups may have one extra member).
  */
@@ -380,4 +395,4 @@ export async function resetPlayersForNewGame(baseDir: string, names: string[]){
   return { ok: true };
 }
 
-export default { addPlayerByName, saveName, setGameName, setGameType, getPlayers, getPlayerNames, deletePlayerByName, removeAllPlayers, updatePlayerScore, setPlayerScore, listGames, saveGameInstance, markGameInactive, getGameName, getGameType, getRound, setRound, loadGameByNameService, resetPlayersForNewGame };
+export default { addPlayerByName, saveName, setGameName, setGameType, getPlayers, getPlayerNames, deletePlayerByName, removeAllPlayers, updatePlayerScore, setPlayerScore, reorderPlayers, listGames, saveGameInstance, markGameInactive, getGameName, getGameType, getRound, setRound, loadGameByNameService, resetPlayersForNewGame };

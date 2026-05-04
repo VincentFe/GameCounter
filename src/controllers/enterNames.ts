@@ -291,6 +291,37 @@ export async function setPlayerScore(req: IncomingMessage, res: ServerResponse, 
 }
 
 /**
+ * Reorder players in the current game.
+ * Validates and delegates to GameService.reorderPlayers().
+ * @param {IncomingMessage} req - HTTP request with JSON body { newOrder: string[] }.
+ * @param {ServerResponse} res - HTTP response object.
+ * @param {string} baseDir - The base directory (__dirname or equivalent).
+ * @returns {Promise<void>} Resolves when response is sent.
+ */
+export async function reorderPlayers(req: IncomingMessage, res: ServerResponse, baseDir: string): Promise<void> {
+	try {
+		const parsed = await readJsonBody(req);
+		const newOrder = parsed.newOrder;
+		if (!Array.isArray(newOrder)) {
+			res.writeHead(400);
+			res.end(JSON.stringify({ ok: false, error: "newOrder must be an array" }));
+			return;
+		}
+		const result = await GameService.reorderPlayers(baseDir, newOrder);
+		if (!result.ok) {
+			res.writeHead(400);
+			res.end(JSON.stringify(result));
+			return;
+		}
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(JSON.stringify({ ok: true }));
+	} catch (err: any) {
+		res.writeHead(400);
+		res.end(JSON.stringify({ ok: false, error: err.message || "Invalid JSON" }));
+	}
+}
+
+/**
  * List all active games from the db folder.
  * @param {ServerResponse} res - HTTP response object.
  * @param {string} baseDir - The base directory (__dirname or equivalent).

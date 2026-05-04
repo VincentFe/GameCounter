@@ -192,6 +192,7 @@
   <div class="container">
     <header>
       <h1>Leaderboard</h1>
+      <button class="header-btn" onclick="logout()">Logout</button>
     </header>
 
     <div class="content">
@@ -279,6 +280,16 @@
 
     function newGame() {
       window.location.href = "/enterNames?from=leaderboard";
+    }
+
+    async function logout() {
+      try {
+        await fetch("/logout", { method: "POST" });
+        window.location.href = "/login";
+      } catch (e) {
+        console.error("Error logging out:", e);
+        window.location.href = "/login";
+      }
     }
 
     loadLeaderboard();

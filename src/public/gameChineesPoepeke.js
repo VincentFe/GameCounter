@@ -324,7 +324,27 @@ async function loadGamePlayers() {
       });
       row.appendChild(addBtn);
 
-      // Chinees Poepeke mode: add input field and buttons
+      // Chinees Poepeke mode: wrapper for all actions and triangle buttons
+      const chineesWrapper = document.createElement("div");
+      chineesWrapper.className = "chinees-wrapper";
+      chineesWrapper.style.display = "flex";
+      chineesWrapper.style.flexDirection = "column";
+      chineesWrapper.style.gap = "6px";
+      chineesWrapper.style.marginLeft = "8px";
+
+      // UP triangle button
+      const upBtn = document.createElement("button");
+      upBtn.className = "btn-triangle";
+      upBtn.textContent = "▲";
+      upBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentValue = parseInt(input.value || "0", 10);
+        input.value = currentValue + 1;
+        updateRoundValidity();
+      });
+      chineesWrapper.appendChild(upBtn);
+
+      // Chinees actions container (gefaald - input - gehaald)
       const actions = document.createElement("div");
       actions.className = "chinees-actions";
 
@@ -359,7 +379,21 @@ async function loadGamePlayers() {
       actions.appendChild(gefaaldBtn);
       actions.appendChild(input);
       actions.appendChild(gehaalBtn);
-      row.appendChild(actions);
+      chineesWrapper.appendChild(actions);
+
+      // DOWN triangle button
+      const downBtn = document.createElement("button");
+      downBtn.className = "btn-triangle";
+      downBtn.textContent = "▼";
+      downBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentValue = parseInt(input.value || "0", 10);
+        input.value = Math.max(0, currentValue - 1);
+        updateRoundValidity();
+      });
+      chineesWrapper.appendChild(downBtn);
+
+      row.appendChild(chineesWrapper);
 
       container.appendChild(row);
     });

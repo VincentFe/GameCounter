@@ -246,16 +246,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (document.getElementById("nameForm")) {
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("clear") === "true") {
-        // Clear all players when navigated from start-new-game
+      const clearPlayers = params.get("clear") === "true";
+      const initialGameName = params.get("gameName");
+      const initialGameType = params.get("gameType");
+
+      if (initialGameName) {
+        await applyGameName(initialGameName);
+      }
+      if (initialGameType) {
+        await applyGameType(initialGameType);
+      }
+
+      if (clearPlayers) {
         await fetch("/removeAllPlayers", { method: "POST" });
-        // then load (will show empty list)
-        await loadManagePlayers();
-        return;
       }
 
       if (params.get("from") === "leaderboard") {
-        // Initialize players from leaderboard but reset scores/history
         try {
           const lb = await fetch("/api/leaderboard");
           if (lb.ok) {
@@ -270,14 +276,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch (e) {
           console.error("Failed to init from leaderboard:", e);
         }
-        await loadManagePlayers();
-        return;
       }
 
-      // Default: just load existing players
+      await loadExistingUsers();
       await loadManagePlayers();
     } catch (e) {
       console.error("Error during enterNames init:", e);
+      await loadExistingUsers();
       loadManagePlayers();
     }
   }
@@ -449,8 +454,7 @@ if (startBtn) {
   startBtn.addEventListener("click", () => {
     const path = window.location.pathname;
     if (path === "/" || path === "") {
-      // from home -> go to enter names and clear list
-      window.location.href = "/enterNames?clear=true";
+      openGameSetup();
     } else if (path === "/enterNames" || path.startsWith("/enterNames")) {
       // from enter names -> start game
       // only proceed if there are players; otherwise warn
@@ -466,7 +470,7 @@ if (startBtn) {
         .catch(() => window.location.href = "/game");
     } else {
       // fallback
-      window.location.href = "/enterNames";
+      openGameSetup();
     }
   });
 }
@@ -553,6 +557,52 @@ function closeGameSelection() {
   }
 }
 
+function openGameSetup() {
+  const modal = document.getElementById("gameSetupModal");
+  if (!modal) return;
+  const nameInput = document.getElementById("setupGameName");
+  const typeInput = document.getElementById("setupGameType");
+  if (nameInput) nameInput.value = "";
+  if (typeInput) typeInput.value = "quiz";
+  modal.style.display = "flex";
+}
+
+function closeGameSetup() {
+  const modal = document.getElementById("gameSetupModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+const gameSetupOkBtn = document.getElementById("gameSetupOkBtn");
+if (gameSetupOkBtn) {
+  gameSetupOkBtn.addEventListener("click", () => {
+    const nameInput = document.getElementById("setupGameName");
+    const typeInput = document.getElementById("setupGameType");
+    const gameName = nameInput ? (nameInput.value || "").trim() : "";
+    const gameType = typeInput ? (typeInput.value || "quiz") : "quiz";
+
+    if (!gameName) {
+      alert("Please enter a game name.");
+      nameInput?.focus();
+      return;
+    }
+    if (!gameType) {
+      alert("Please choose a game type.");
+      typeInput?.focus();
+      return;
+    }
+
+    closeGameSetup();
+    window.location.href = "/enterNames?clear=true&gameName=" + encodeURIComponent(gameName) + "&gameType=" + encodeURIComponent(gameType);
+  });
+}
+
+const gameSetupCancelBtn = document.getElementById("gameSetupCancelBtn");
+if (gameSetupCancelBtn) {
+  gameSetupCancelBtn.addEventListener("click", closeGameSetup);
+}
+
 const continueGameBtn = document.getElementById("continueGameBtn");
 if (continueGameBtn) {
   continueGameBtn.addEventListener("click", () => {
@@ -573,9 +623,110 @@ const nameInput = document.getElementById("playerName");
 const statusDiv = document.getElementById("status");
 const setGameBtn = document.getElementById("setGameBtn");
 const gameNameInput = document.getElementById("gameName");
+const existingUsersSelect = document.getElementById("existingUserSelect");
+const addExistingUserBtn = document.getElementById("addExistingUserBtn");
 
 // Game name Set/Edit toggle
 let gameNameIsSet = false;
+
+async function loadExistingUsers() {
+  if (!existingUsersSelect) return;
+  existingUsersSelect.innerHTML = "<option value=\"\">Loading users…</option>";
+
+  try {
+    const resp = await fetch("/api/users");
+    if (!resp.ok) {
+      existingUsersSelect.innerHTML = "<option value=\"\">Unable to load users</option>";
+      return;
+    }
+
+    const users = await resp.json();
+    existingUsersSelect.innerHTML = "<option value=\"\">Select an existing user</option>";
+
+    if (!Array.isArray(users) || users.length === 0) {
+      existingUsersSelect.innerHTML = "<option value=\"\">No users found</option>";
+      return;
+    }
+
+    users.forEach((user) => {
+      const option = document.createElement("option");
+      option.value = user.username;
+      option.textContent = `${user.username} (${user.role})`;
+      existingUsersSelect.appendChild(option);
+    });
+  } catch (e) {
+    existingUsersSelect.innerHTML = "<option value=\"\">Network error loading users</option>";
+  }
+}
+
+if (addExistingUserBtn) {
+  addExistingUserBtn.addEventListener("click", async () => {
+    const selectedName = existingUsersSelect?.value;
+    if (!selectedName) {
+      alert("Please choose an existing user to add.");
+      return;
+    }
+
+    addExistingUserBtn.disabled = true;
+    try {
+      const resp = await fetch("/saveName", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: selectedName }),
+      });
+      const data = await resp.json();
+      if (resp.ok && data.ok) {
+        if (statusDiv) {
+          statusDiv.textContent = `✅ "${selectedName}" added as a player.`;
+          statusDiv.classList.remove("error");
+          statusDiv.classList.add("success");
+          statusDiv.style.display = "block";
+        }
+        await loadManagePlayers();
+      } else {
+        alert("Failed to add existing user: " + (data?.error || resp.statusText));
+      }
+    } catch (e) {
+      alert("Network error: " + e.message);
+    } finally {
+      addExistingUserBtn.disabled = false;
+    }
+  });
+}
+
+async function applyGameName(name) {
+  if (!gameNameInput || !setGameBtn) return;
+  gameNameInput.value = name;
+  gameNameInput.disabled = true;
+  setGameBtn.textContent = "Edit";
+  gameNameIsSet = true;
+
+  try {
+    await fetch("/setGameName", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  } catch (e) {
+    console.warn("Unable to apply game name on load:", e);
+  }
+}
+
+async function applyGameType(type) {
+  const gameTypeSelect = document.getElementById("gameType");
+  if (!gameTypeSelect) return;
+  gameTypeSelect.value = type;
+
+  try {
+    await fetch("/setGameType", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type }),
+    });
+  } catch (e) {
+    console.warn("Unable to apply game type on load:", e);
+  }
+}
 
 if (setGameBtn) {
   setGameBtn.addEventListener("click", async () => {
@@ -783,3 +934,113 @@ if (createGroupsBtn) {
     input.focus();
   });
 }
+
+async function logout() {
+  try {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+  } catch (e) {
+    console.error("Error logging out:", e);
+    window.location.href = "/login";
+  }
+}
+
+// Check if current user is grandmaster and show admin section
+async function checkAdminAccess() {
+  const adminSection = document.getElementById("adminSection");
+  if (!adminSection) return;
+
+  try {
+    const resp = await fetch("/api/user-role");
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.isGrandmaster) {
+        adminSection.style.display = "block";
+        await loadUserList();
+      }
+    }
+  } catch (e) {
+    console.error("Error checking admin access:", e);
+  }
+}
+
+// Handle create user form submission
+const createUserForm = document.getElementById("createUserForm");
+if (createUserForm) {
+  createUserForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usernameInput = document.getElementById("newUsername");
+    const passwordInput = document.getElementById("newPassword");
+    const roleInput = document.getElementById("newUserRole");
+    const messageEl = document.getElementById("createUserMessage");
+
+    const username = usernameInput ? usernameInput.value : "";
+    const password = passwordInput ? passwordInput.value : "";
+    const role = roleInput ? roleInput.value : "user";
+
+    if (!messageEl) return;
+
+    try {
+      const resp = await fetch("/createUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&role=${encodeURIComponent(role)}`
+      });
+
+      const data = await resp.json();
+      if (resp.ok) {
+        messageEl.innerHTML = "<span style='color: green;'>User created successfully!</span>";
+        if (usernameInput) usernameInput.value = "";
+        if (passwordInput) passwordInput.value = "";
+        await loadUserList();
+      } else {
+        messageEl.innerHTML = `<span style='color: red;'>Error: ${data.error}</span>`;
+      }
+    } catch (e) {
+      messageEl.innerHTML = "<span style='color: red;'>Network error</span>";
+    }
+  });
+}
+
+async function loadUserList() {
+  const userListBody = document.getElementById("userListBody");
+  const noUsersMessage = document.getElementById("noUsersMessage");
+  if (!userListBody || !noUsersMessage) return;
+
+  try {
+    const resp = await fetch("/api/users");
+    if (!resp.ok) {
+      userListBody.innerHTML = `<tr><td colspan="3">Unable to load users</td></tr>`;
+      noUsersMessage.style.display = "none";
+      return;
+    }
+
+    const users = await resp.json();
+    if (!Array.isArray(users) || users.length === 0) {
+      userListBody.innerHTML = `<tr><td colspan="3">No users available</td></tr>`;
+      noUsersMessage.style.display = "block";
+      return;
+    }
+
+    noUsersMessage.style.display = "none";
+    userListBody.innerHTML = "";
+    users.forEach((user) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${user.username}</td>
+        <td>${user.role}</td>
+        <td>${user.guid}</td>
+      `;
+      userListBody.appendChild(row);
+    });
+  } catch (e) {
+    userListBody.innerHTML = `<tr><td colspan="3">Network error</td></tr>`;
+    noUsersMessage.style.display = "none";
+  }
+}
+
+// Initialize admin section on page load
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAdminAccess();
+});
+

@@ -120,6 +120,16 @@ async function endGame() {
   }
 }
 
+async function logout() {
+  try {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+  } catch (e) {
+    console.error("Error logging out:", e);
+    window.location.href = "/login";
+  }
+}
+
 async function loadGamePlayers() {
   const container = document.getElementById("playersList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -201,6 +211,11 @@ async function loadGamePlayers() {
         togglePlayer(playerName, !isCurrentlySelected);
       });
 
+      // Make card draggable
+      card.draggable = true;
+      card.addEventListener("dragstart", handleDragStart);
+      card.addEventListener("dragend", handleDragEnd);
+
       row.appendChild(card);
 
       // Add button
@@ -215,6 +230,11 @@ async function loadGamePlayers() {
 
       container.appendChild(row);
     });
+
+    // Add drag-and-drop event listeners to container
+    container.addEventListener("dragover", handleDragOver);
+    container.addEventListener("drop", handleDrop);
+    container.addEventListener("dragleave", handleDragLeave);
 
     updateScoreUpdateSection();
   } catch (e) {
@@ -392,6 +412,91 @@ async function setScoresForPlayers(amount) {
   } finally {
     buttons.forEach((btn) => (btn.disabled = false));
   }
+}
+
+// Drag and Drop functionality
+let draggedElement = null;
+
+function handleDragStart(e) {
+  draggedElement = e.target;
+  draggedElement.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/html", draggedElement.outerHTML);
+}
+
+function handleDragEnd(e) {
+  if (draggedElement) {
+    draggedElement.classList.remove("dragging");
+    draggedElement = null;
+  }
+  // Remove drag-over class from all elements
+  document.querySelectorAll(".player-card.drag-over").forEach(el => el.classList.remove("drag-over"));
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+
+  const target = e.target.closest(".player-card");
+  if (target && target !== draggedElement) {
+    // Remove previous drag-over
+    document.querySelectorAll(".player-card.drag-over").forEach(el => el.classList.remove("drag-over"));
+    target.classList.add("drag-over");
+  }
+}
+
+function handleDragLeave(e) {
+  const target = e.target.closest(".player-card");
+  if (target) {
+    target.classList.remove("drag-over");
+  }
+}
+
+async function handleDrop(e) {
+  e.preventDefault();
+
+  const target = e.target.closest(".player-card");
+  if (!target || !draggedElement || target === draggedElement) {
+    handleDragEnd(e);
+    return;
+  }
+
+  // Reorder DOM
+  const container = document.getElementById("playersList");
+  const draggedRow = draggedElement.closest(".player-row");
+  const targetRow = target.closest(".player-row");
+
+  const allRows = Array.from(container.children);
+  const draggedIndex = allRows.indexOf(draggedRow);
+  const targetIndex = allRows.indexOf(targetRow);
+
+  if (draggedIndex < targetIndex) {
+    container.insertBefore(draggedRow, targetRow.nextSibling);
+  } else {
+    container.insertBefore(draggedRow, targetRow);
+  }
+
+  // Get new order of names
+  const newOrder = Array.from(document.querySelectorAll(".player-card")).map(card => card.dataset.name);
+
+  // Send to server
+  try {
+    const resp = await fetch("/reorderPlayers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newOrder })
+    });
+    if (!resp.ok) {
+      console.error("Failed to reorder players");
+      // Reload to revert
+      loadGamePlayers();
+    }
+  } catch (err) {
+    console.error("Error reordering players:", err);
+    loadGamePlayers();
+  }
+
+  handleDragEnd(e);
 }
 
 // Event Listeners

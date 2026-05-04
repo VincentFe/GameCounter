@@ -1,0 +1,17 @@
+Prerequesite: Installeer git: https://git-scm.com/install/windows
+
+1. windows knop + R
+2. Typ "cmd" + OK
+3. Navigeer naar de folder waar je de code in wil zetten, als dit Downloads is typ "cd Downloads" + Enter
+4. git clone https://github.com/VincentFe/GameCounter.git
+5. Typ "cd GameCounter" + Enter
+6. Typ "npm run dev" + Enter
+Als dit de output is is het systeem correct aan het draaien: 
+
+> dev
+> tsx src/server.ts
+
+✅ Game instance initialized
+Server running at http://localhost:3000
+
+7. Navigeer naar de url http://localhost:3000 door erop te clicken of in je webbrowser in te geven in je zoekbalk
