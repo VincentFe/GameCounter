@@ -5,6 +5,10 @@ let addingNewPlayer = false;
 // Track selected buttons for chinees poepeke: { playerName: "gehaald" | "gefaald" | null }
 let chineesButtonStates = {};
 
+/**
+ * Save the current game state on the server and redirect to home when complete.
+ * @returns {Promise<void>} Resolves when the save operation completes.
+ */
 async function saveGame() {
   try {
     const resp = await fetch("/saveGame", { method: "POST" });
@@ -19,6 +23,11 @@ async function saveGame() {
   }
 }
 
+/**
+ * Create and insert the UI for adding a new player.
+ * Prevents multiple concurrent add forms.
+ * @returns {void}
+ */
 function addNewPlayerEntry() {
   if (addingNewPlayer) {
     alert("Please finish adding the current player first.");
@@ -108,6 +117,10 @@ function addNewPlayerEntry() {
   input.focus();
 }
 
+/**
+ * Mark the current game inactive on the server and redirect to the leaderboard.
+ * @returns {Promise<void>} Resolves when the end-game action completes.
+ */
 async function endGame() {
   try {
     const resp = await fetch("/markGameInactive", { method: "POST" });
@@ -122,6 +135,11 @@ async function endGame() {
   }
 }
 
+/**
+ * Fetch and render all current game players.
+ * Reads current player and game type state from the server.
+ * @returns {Promise<void>} Resolves after the player list is updated.
+ */
 async function loadGamePlayers() {
   const container = document.getElementById("playersList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -308,6 +326,14 @@ async function loadGamePlayers() {
   }
 }
 
+/**
+ * Toggle the Chinees Poepeke selection state for a player.
+ * @param {string} playerName - The name of the player.
+ * @param {string} buttonType - Selected button type: "gehaald" or "gefaald".
+ * @param {HTMLElement} selectedBtn - The button that was just selected.
+ * @param {HTMLElement} otherBtn - The other button to deselect.
+ * @returns {void}
+ */
 function toggleChineesButton(playerName, buttonType, selectedBtn, otherBtn) {
   const currentState = chineesButtonStates[playerName];
   
@@ -323,6 +349,11 @@ function toggleChineesButton(playerName, buttonType, selectedBtn, otherBtn) {
   }
 }
 
+/**
+ * Validate the current Chinees Poepeke round selections and send score updates.
+ * Ensures each player has a selection before applying score changes.
+ * @returns {Promise<void>} Resolves when all updates are sent.
+ */
 async function validateRound() {
   // Check if all players have either gehaald or gefaald selected
   for (const player of allPlayers) {
@@ -416,6 +447,10 @@ async function validateRound() {
   updateScoreUpdateSection();
 }
 
+/**
+ * Render the currently selected players in the selected players list UI.
+ * @returns {void}
+ */
 function updateSelectedPlayersList() {
   const listEl = document.getElementById("selectedPlayersList");
   listEl.innerHTML = "";
@@ -433,6 +468,10 @@ function updateSelectedPlayersList() {
   });
 }
 
+/**
+ * Show or hide the bulk score update section based on selection count.
+ * @returns {void}
+ */
 function updateScoreUpdateSection() {
   const section = document.getElementById("scoreUpdateSection");
   if (section) {
@@ -440,6 +479,12 @@ function updateScoreUpdateSection() {
   }
 }
 
+/**
+ * Send a direct score update for a single player to the server.
+ * @param {string} playerName - The player to update.
+ * @param {number} points - The score delta to apply.
+ * @returns {Promise<void>} Resolves when the update completes.
+ */
 async function updatePlayerScoreDirect(playerName, points) {
   try {
     const resp = await fetch("/updateScore", {
@@ -461,6 +506,11 @@ async function updatePlayerScoreDirect(playerName, points) {
   }
 }
 
+/**
+ * Update scores for all selected players using the specified operation.
+ * @param {"add"|"subtract"|"set"} operation - Operation to perform.
+ * @returns {Promise<void>} Resolves once the operation is processed.
+ */
 async function updateScores(operation) {
   if (selectedPlayers.size === 0) {
     alert("Please select at least one player");
@@ -485,6 +535,11 @@ async function updateScores(operation) {
   }
 }
 
+/**
+ * Apply a score delta to all selected players.
+ * @param {number} amount - The delta amount to add to selected players.
+ * @returns {Promise<void>} Resolves when all server requests complete.
+ */
 async function updateScoresForPlayers(amount) {
   const statusEl = document.getElementById("statusMessage");
   const buttons = document.querySelectorAll("#addScoreBtn, #subtractScoreBtn");
@@ -526,6 +581,11 @@ async function updateScoresForPlayers(amount) {
   }
 }
 
+/**
+ * Set the score of all selected players to a fixed amount.
+ * @param {number} amount - The score value to assign.
+ * @returns {Promise<void>} Resolves when the server updates are complete.
+ */
 async function setScoresForPlayers(amount) {
   const statusEl = document.getElementById("statusMessage");
   const buttons = document.querySelectorAll("#setScoreBtn");

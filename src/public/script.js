@@ -1,3 +1,7 @@
+/**
+ * Load and render players into the player list on the page.
+ * @returns {Promise<void>} Resolves after players have been fetched and displayed.
+ */
 async function loadPlayers() {
   const listEl = document.getElementById("playerList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -59,6 +63,10 @@ async function loadPlayers() {
 window.__deleteMode = false;
 window.__selectedToDelete = new Set();
 
+/**
+ * Update visibility and label of the delete button based on current selection state.
+ * @returns {void}
+ */
 function updateDeleteButtonVisibility() {
   const deleteBtn = document.getElementById("deleteBtn");
   if (!deleteBtn) return;
@@ -71,6 +79,10 @@ function updateDeleteButtonVisibility() {
   }
 }
 
+/**
+ * Delete selected players via the server API and refresh the player list.
+ * @returns {Promise<void>} Resolves when delete operations complete.
+ */
 async function performDeletes() {
   if (window.__selectedToDelete.size === 0) return;
   if (!confirm(`Delete ${window.__selectedToDelete.size} selected player(s)?`)) return;
@@ -96,6 +108,10 @@ async function performDeletes() {
   if (typeof loadGamePlayers === "function") loadGamePlayers();
 }
 
+/**
+ * Toggle player delete selection mode on and off.
+ * @returns {void}
+ */
 function toggleDeleteMode() {
   if (!window.__deleteMode) {
     // enter delete-selection mode
@@ -119,6 +135,10 @@ function toggleDeleteMode() {
   }
 }
 
+/**
+ * Render the master select/deselect checkbox for delete mode.
+ * @returns {void}
+ */
 function renderMasterCheckbox() {
   removeMasterCheckbox();
   const deleteBtn = document.getElementById("deleteBtn");
@@ -177,10 +197,18 @@ function renderMasterCheckbox() {
   deleteBtn.parentNode.insertBefore(wrapper, deleteBtn);
 }
 
+/**
+ * Remove the master delete checkbox from the DOM if it exists.
+ * @returns {void}
+ */
 function removeMasterCheckbox() {
   const existing = document.getElementById("deleteMasterWrapper");
   if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
 }
+/**
+ * Load the list of player names for the management interface.
+ * @returns {Promise<void>} Resolves after the manage players list is rendered.
+ */
 async function loadManagePlayers() {
   const listEl = document.getElementById("playerList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -289,8 +317,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Note: /game page players are loaded by game.js
 });
 
-  // Fetch and render current groups into #groupsList
-  async function renderGroups(){
+/**
+ * Fetch existing groups from the server and render them in the groups panel.
+ * @returns {Promise<void>} Resolves when groups are rendered.
+ */
+async function renderGroups(){
     const container = document.getElementById('groupsList');
     if (!container) return;
     try {
@@ -376,7 +407,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
 /**
- * Show the start-with-groups button only when all groups have non-empty names.
+ * Show or hide the start-game-with-groups button based on group validity.
+ * @param {any[]} groups - Array of group objects from the server.
+ * @returns {void}
  */
 function updateStartWithGroupsVisibility(groups){
   try{
@@ -395,6 +428,11 @@ function updateStartWithGroupsVisibility(groups){
 }
 
 // Toggle groups visibility helper (used when game type changes)
+/**
+ * Toggle visibility of the groups UI section.
+ * @param {boolean} show - Whether the groups UI should be visible.
+ * @returns {void}
+ */
 function setGroupsVisibility(show){
   const groupsHeader = document.querySelectorAll('.groups-header');
   const groupsList = document.getElementById('groupsList');
@@ -485,6 +523,10 @@ if (loadGameBtn) {
 
 let selectedGame = null;
 
+/**
+ * Open the saved game selection modal and populate it from the server.
+ * @returns {Promise<void>} Resolves when the modal contents are loaded.
+ */
 async function openGameSelection() {
   const modal = document.getElementById("gameSelectionModal");
   const gamesList = document.getElementById("gamesList");
@@ -550,6 +592,10 @@ async function openGameSelection() {
   }
 }
 
+/**
+ * Close the saved game selection modal.
+ * @returns {void}
+ */
 function closeGameSelection() {
   const modal = document.getElementById("gameSelectionModal");
   if (modal) {
@@ -557,6 +603,10 @@ function closeGameSelection() {
   }
 }
 
+/**
+ * Open the game setup modal and reset its fields.
+ * @returns {void}
+ */
 function openGameSetup() {
   const modal = document.getElementById("gameSetupModal");
   if (!modal) return;
@@ -567,6 +617,10 @@ function openGameSetup() {
   modal.style.display = "flex";
 }
 
+/**
+ * Close the game setup modal.
+ * @returns {void}
+ */
 function closeGameSetup() {
   const modal = document.getElementById("gameSetupModal");
   if (modal) {
@@ -629,6 +683,10 @@ const addExistingUserBtn = document.getElementById("addExistingUserBtn");
 // Game name Set/Edit toggle
 let gameNameIsSet = false;
 
+/**
+ * Load existing users for selection in the enter names interface.
+ * @returns {Promise<void>} Resolves when the existing users list is populated.
+ */
 async function loadExistingUsers() {
   if (!existingUsersSelect) return;
   existingUsersSelect.innerHTML = "<option value=\"\">Loading users…</option>";
@@ -694,6 +752,11 @@ if (addExistingUserBtn) {
   });
 }
 
+/**
+ * Apply a prefilled game name to the UI and send it to the server.
+ * @param {string} name - The game name to apply.
+ * @returns {Promise<void>} Resolves when the name is applied.
+ */
 async function applyGameName(name) {
   if (!gameNameInput || !setGameBtn) return;
   gameNameInput.value = name;
@@ -712,6 +775,11 @@ async function applyGameName(name) {
   }
 }
 
+/**
+ * Apply a preselected game type to the UI and send it to the server.
+ * @param {string} type - The game type to apply.
+ * @returns {Promise<void>} Resolves when the type is applied.
+ */
 async function applyGameType(type) {
   const gameTypeSelect = document.getElementById("gameType");
   if (!gameTypeSelect) return;
@@ -935,6 +1003,10 @@ if (createGroupsBtn) {
   });
 }
 
+/**
+ * Log out the current user and redirect to the login page.
+ * @returns {Promise<void>} Resolves when logout completes.
+ */
 async function logout() {
   try {
     await fetch("/logout", { method: "POST" });
@@ -946,6 +1018,10 @@ async function logout() {
 }
 
 // Check if current user is grandmaster and show admin section
+/**
+ * Check whether the current user has admin permissions and reveal admin UI.
+ * @returns {Promise<void>} Resolves after access check completes.
+ */
 async function checkAdminAccess() {
   const adminSection = document.getElementById("adminSection");
   if (!adminSection) return;
@@ -1002,6 +1078,10 @@ if (createUserForm) {
   });
 }
 
+/**
+ * Load the admin user list and render it in the management table.
+ * @returns {Promise<void>} Resolves when the user list is populated.
+ */
 async function loadUserList() {
   const userListBody = document.getElementById("userListBody");
   const noUsersMessage = document.getElementById("noUsersMessage");

@@ -3,6 +3,10 @@ let selectedPlayers = new Set();
 let allPlayers = [];
 let addingNewPlayer = false;
 
+/**
+ * Save the current game state to the server and return to home.
+ * @returns {Promise<void>} Resolves when the save request completes.
+ */
 async function saveGame() {
   try {
     const resp = await fetch("/saveGame", { method: "POST" });
@@ -17,6 +21,11 @@ async function saveGame() {
   }
 }
 
+/**
+ * Create the UI for a new player entry in the quiz game.
+ * Prevents multiple add forms from being active at once.
+ * @returns {void}
+ */
 function addNewPlayerEntry() {
   if (addingNewPlayer) {
     alert("Please finish adding the current player first.");
@@ -120,6 +129,10 @@ async function endGame() {
   }
 }
 
+/**
+ * Log the current session out and redirect to the login page.
+ * @returns {Promise<void>} Resolves when the logout request finishes.
+ */
 async function logout() {
   try {
     await fetch("/logout", { method: "POST" });
@@ -130,6 +143,10 @@ async function logout() {
   }
 }
 
+/**
+ * Load current game player data and render the quiz player list.
+ * @returns {Promise<void>} Resolves once the UI is refreshed.
+ */
 async function loadGamePlayers() {
   const container = document.getElementById("playersList");
   const emptyStateEl = document.getElementById("emptyState");
@@ -242,6 +259,12 @@ async function loadGamePlayers() {
   }
 }
 
+/**
+ * Toggle a player selection for bulk score operations.
+ * @param {string} name - The player name.
+ * @param {boolean} selected - True to select, false to deselect.
+ * @returns {void}
+ */
 function togglePlayer(name, selected) {
   if (selected) {
     selectedPlayers.add(name);
@@ -263,6 +286,10 @@ function togglePlayer(name, selected) {
   updateScoreUpdateSection();
 }
 
+/**
+ * Render the currently selected players list in the quiz UI.
+ * @returns {void}
+ */
 function updateSelectedPlayersList() {
   const listEl = document.getElementById("selectedPlayersList");
   listEl.innerHTML = "";
@@ -280,6 +307,10 @@ function updateSelectedPlayersList() {
   });
 }
 
+/**
+ * Show or hide the score update controls depending on player selection state.
+ * @returns {void}
+ */
 function updateScoreUpdateSection() {
   const section = document.getElementById("scoreUpdateSection");
   if (section) {
@@ -287,6 +318,12 @@ function updateScoreUpdateSection() {
   }
 }
 
+/**
+ * Send a direct score update for a single player.
+ * @param {string} playerName - The player whose score to update.
+ * @param {number} points - The score delta to apply.
+ * @returns {Promise<void>} Resolves when the update completes.
+ */
 async function updatePlayerScoreDirect(playerName, points) {
   try {
     const resp = await fetch("/updateScore", {
@@ -308,6 +345,11 @@ async function updatePlayerScoreDirect(playerName, points) {
   }
 }
 
+/**
+ * Update selected players with the given score operation.
+ * @param {"add"|"subtract"|"set"} operation - Operation to perform.
+ * @returns {Promise<void>} Resolves after the operation is processed.
+ */
 async function updateScores(operation) {
   if (selectedPlayers.size === 0) {
     alert("Please select at least one player");
@@ -332,6 +374,11 @@ async function updateScores(operation) {
   }
 }
 
+/**
+ * Apply a score delta to all selected players.
+ * @param {number} amount - The value to add to selected players.
+ * @returns {Promise<void>} Resolves when all updates complete.
+ */
 async function updateScoresForPlayers(amount) {
   const statusEl = document.getElementById("statusMessage");
   const buttons = document.querySelectorAll("#addScoreBtn, #subtractScoreBtn");
@@ -373,6 +420,11 @@ async function updateScoresForPlayers(amount) {
   }
 }
 
+/**
+ * Set the score for all selected players to a fixed value.
+ * @param {number} amount - The score to assign.
+ * @returns {Promise<void>} Resolves when the updates complete.
+ */
 async function setScoresForPlayers(amount) {
   const statusEl = document.getElementById("statusMessage");
   const buttons = document.querySelectorAll("#setScoreBtn");
@@ -417,6 +469,11 @@ async function setScoresForPlayers(amount) {
 // Drag and Drop functionality
 let draggedElement = null;
 
+/**
+ * Handle the beginning of a drag operation for a player card.
+ * @param {DragEvent} e - The drag event.
+ * @returns {void}
+ */
 function handleDragStart(e) {
   draggedElement = e.target;
   draggedElement.classList.add("dragging");
@@ -424,6 +481,11 @@ function handleDragStart(e) {
   e.dataTransfer.setData("text/html", draggedElement.outerHTML);
 }
 
+/**
+ * Clean up drag state after a drag operation ends.
+ * @param {DragEvent} e - The drag event.
+ * @returns {void}
+ */
 function handleDragEnd(e) {
   if (draggedElement) {
     draggedElement.classList.remove("dragging");
@@ -433,6 +495,11 @@ function handleDragEnd(e) {
   document.querySelectorAll(".player-card.drag-over").forEach(el => el.classList.remove("drag-over"));
 }
 
+/**
+ * Handle drag over events to visually mark valid drop targets.
+ * @param {DragEvent} e - The drag event.
+ * @returns {void}
+ */
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = "move";
@@ -445,6 +512,11 @@ function handleDragOver(e) {
   }
 }
 
+/**
+ * Handle drag leave events to clear drag-over styling.
+ * @param {DragEvent} e - The drag event.
+ * @returns {void}
+ */
 function handleDragLeave(e) {
   const target = e.target.closest(".player-card");
   if (target) {
@@ -452,6 +524,11 @@ function handleDragLeave(e) {
   }
 }
 
+/**
+ * Handle drop of a dragged player card and send the new order to the server.
+ * @param {DragEvent} e - The drag event.
+ * @returns {Promise<void>} Resolves after reordering is complete.
+ */
 async function handleDrop(e) {
   e.preventDefault();
 
