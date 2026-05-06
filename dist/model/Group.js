@@ -15,18 +15,37 @@ export class Group {
         this.name = (name || "").toString();
         this.members = Array.isArray(members) ? members.map((p) => String(p)) : [];
     }
+    /**
+     * Add a member to this group if not already present.
+     * @param {string} name - The member name to add.
+     * @returns {void}
+     */
     addMember(name) {
         if (!this.members.includes(name))
             this.members.push(name);
     }
+    /**
+     * Remove a member from this group by name.
+     * @param {string} name - The member name to remove.
+     * @returns {void}
+     */
     removeMember(name) {
         const i = this.members.indexOf(name);
         if (i !== -1)
             this.members.splice(i, 1);
     }
+    /**
+     * Serialize this group to a JSON-friendly object.
+     * @returns {{ id: string; name: string; members: string[] }} JSON representation.
+     */
     toJSON() {
         return { id: this.id, name: this.name, members: this.members };
     }
+    /**
+     * Create a Group instance from a JSON object.
+     * @param {any} obj - Object containing group data.
+     * @returns {Group} The reconstructed group instance.
+     */
     static fromJSON(obj) {
         if (!obj)
             return new Group("");

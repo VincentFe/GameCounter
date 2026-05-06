@@ -62,20 +62,33 @@ export class Game {
         return this.password === password;
     }
     /**
-     * Add a player to the game.
+     * Add a player or player name to the game roster.
      * @param {Player|string} player - A Player instance or player name string.
      */
     addPlayer(player) {
         const p = player instanceof Player ? player : new Player(player);
         this.players.push(p);
     }
+    /**
+     * Add a group to the game.
+     * @param {Group|string} group - The Group instance or group name.
+     */
     addGroup(group) {
         const g = group instanceof Group ? group : new Group(String(group));
         this.groups.push(g);
     }
+    /**
+     * Get all groups defined for this game.
+     * @returns {Group[]} Array of Group instances.
+     */
     getGroups() {
         return this.groups;
     }
+    /**
+     * Remove a group from the game by its identifier.
+     * @param {string} id - Group GUID to remove.
+     * @returns {boolean} True if removed, false if not found.
+     */
     removeGroupById(id) {
         const idx = this.groups.findIndex((g) => g.id === id);
         if (idx === -1)
@@ -83,15 +96,23 @@ export class Game {
         this.groups.splice(idx, 1);
         return true;
     }
+    /**
+     * Check whether the game is configured to use groups.
+     * @returns {boolean} True when groups are enabled.
+     */
     usesGroups() {
         return !!this.useGroups;
     }
+    /**
+     * Enable or disable group mode for the game.
+     * @param {boolean} flag - True to use groups, false otherwise.
+     */
     setUseGroups(flag) {
         this.useGroups = !!flag;
     }
     /**
-     * Replace all groups on this game.
-     * @param {Group[]} groups
+     * Replace all groups configured for the game.
+     * @param {Group[]} groups - Array of groups to set.
      */
     setGroups(groups) {
         this.groups = Array.isArray(groups) ? groups : [];

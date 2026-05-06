@@ -100,6 +100,18 @@
 			"problemMatcher": [
 				"$eslint-stylish"
 			]
+		},
+		{
+			"label": "Run Tests After Refactoring",
+			"type": "shell",
+			"command": "npm test",
+			"isBackground": false
+		},
+		{
+			"label": "Run Tests After Partial Refactoring",
+			"type": "shell",
+			"command": "npm test",
+			"isBackground": false
 		}
 	]
 }

@@ -49,18 +49,39 @@ export declare abstract class Game {
      */
     verifyPassword(password: string): boolean;
     /**
-     * Add a player to the game.
+     * Add a player or player name to the game roster.
      * @param {Player|string} player - A Player instance or player name string.
      */
     addPlayer(player: Player | string): void;
+    /**
+     * Add a group to the game.
+     * @param {Group|string} group - The Group instance or group name.
+     */
     addGroup(group: Group | string): void;
+    /**
+     * Get all groups defined for this game.
+     * @returns {Group[]} Array of Group instances.
+     */
     getGroups(): Group[];
+    /**
+     * Remove a group from the game by its identifier.
+     * @param {string} id - Group GUID to remove.
+     * @returns {boolean} True if removed, false if not found.
+     */
     removeGroupById(id: string): boolean;
+    /**
+     * Check whether the game is configured to use groups.
+     * @returns {boolean} True when groups are enabled.
+     */
     usesGroups(): boolean;
+    /**
+     * Enable or disable group mode for the game.
+     * @param {boolean} flag - True to use groups, false otherwise.
+     */
     setUseGroups(flag: boolean): void;
     /**
-     * Replace all groups on this game.
-     * @param {Group[]} groups
+     * Replace all groups configured for the game.
+     * @param {Group[]} groups - Array of groups to set.
      */
     setGroups(groups: Group[]): void;
     /**

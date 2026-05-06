@@ -35,63 +35,9 @@ import { renderGamePage } from "./controllers/game.js";
 import { renderLeaderboard, getLeaderboard } from "./controllers/leaderboard.js";
 import { initializeGame, saveGame, loadGameByName, getGame } from "./model/gameManager.js";
 import * as UserService from "./model/UserService.js";
+import { getSessionId, getCurrentUser, requireAuth, requireGrandmaster } from "./middleware/auth.js";
 
 const appDir = path.join(process.cwd(), "src");
-
-/**
- * Get session ID from cookies.
- * @param {IncomingMessage} req - The incoming request.
- * @returns {string|null} Session ID or null.
- */
-function getSessionId(req: IncomingMessage): string | null {
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return null;
-  const cookies = cookieHeader.split(";").map((c) => c.trim());
-  const sessionCookie = cookies.find((c) => c.startsWith("sessionId="));
-  return sessionCookie ? sessionCookie.split("=")[1] : null;
-}
-
-/**
- * Get current user from the request session.
- * @param {IncomingMessage} req - The incoming request.
- * @returns {import("./model/User.js").User|null} The current user or null.
- */
-function getCurrentUser(req: IncomingMessage) {
-  const sessionId = getSessionId(req);
-  return sessionId ? UserService.getUserFromSession(sessionId) : null;
-}
-
-/**
- * Ensure the request is authenticated.
- * @param {IncomingMessage} req - The incoming request.
- * @param {ServerResponse} res - The response object.
- * @returns {boolean} True when authenticated.
- */
-function requireAuth(req: IncomingMessage, res: ServerResponse): boolean {
-  const user = getCurrentUser(req);
-  if (!user) {
-    res.writeHead(302, { Location: "/login" });
-    res.end();
-    return false;
-  }
-  return true;
-}
-
-/**
- * Ensure the request is made by a grandmaster user.
- * @param {IncomingMessage} req - The incoming request.
- * @param {ServerResponse} res - The response object.
- * @returns {boolean} True when grandmaster.
- */
-function requireGrandmaster(req: IncomingMessage, res: ServerResponse): boolean {
-  const user = getCurrentUser(req);
-  if (!UserService.isGrandmaster(user)) {
-    res.writeHead(403);
-    res.end("Forbidden: Grandmaster access required");
-    return false;
-  }
-  return true;
-}
 
 /**
  * Render the login page.
@@ -240,8 +186,16 @@ async function handleGetUsers(req: IncomingMessage, res: ServerResponse): Promis
  */
 function createRequestListener(): http.RequestListener {
   return async (req, res) => {
-    const { method, url } = req;
-    const urlParts = url?.split("?") || [];
+    const method = req.method;
+    const url = req.url;
+
+    if (!method || !url) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing URL or method" }));
+      return;
+    }
+
+    const urlParts = url.split("?");
     const pathname = urlParts[0];
     const queryString = urlParts[1] || "";
 
@@ -250,162 +204,16 @@ function createRequestListener(): http.RequestListener {
       return params.get(key);
     }
 
-    if (method === "GET" && pathname === "/login") {
-      return renderLoginPage(res);
-    }
-    if (method === "POST" && pathname === "/login") {
-      return handleLogin(req, res);
-    }
-    if (method === "POST" && pathname === "/logout") {
-      return handleLogout(req, res);
-    }
+    // Handle auth routes
+    if (handleAuthRoutes(req, res, method, pathname)) return;
 
+    // Require auth for all other routes
     if (!requireAuth(req, res)) return;
 
-    if (method === "GET" && url === "/players") {
-      if (!requireGrandmaster(req, res)) return;
-      return getPlayers(res, appDir);
-    }
-    if (method === "POST" && url === "/saveName") {
-      if (!requireGrandmaster(req, res)) return;
-      return saveName(req, res, appDir);
-    }
-    if (method === "POST" && url === "/setGameName") {
-      if (!requireGrandmaster(req, res)) return;
-      return setGameName(req, res, appDir);
-    }
-    if (method === "POST" && url === "/setGameType") {
-      if (!requireGrandmaster(req, res)) return;
-      return setGameType(req, res, appDir);
-    }
-    if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {
-      if (!requireGrandmaster(req, res)) return;
-      return deletePlayer(req, res, appDir);
-    }
-    if (method === "POST" && url === "/removeAllPlayers") {
-      if (!requireGrandmaster(req, res)) return;
-      return removeAllPlayers(req, res, appDir);
-    }
-    if (method === "POST" && url === "/resetPlayersForNewGame") {
-      if (!requireGrandmaster(req, res)) return;
-      return resetPlayersForNewGame(req, res, appDir);
-    }
-    if (method === "POST" && url === "/updateScore") {
-      if (!requireGrandmaster(req, res)) return;
-      return updatePlayerScore(req, res, appDir);
-    }
-    if (method === "POST" && url === "/setScore") {
-      if (!requireGrandmaster(req, res)) return;
-      return setPlayerScore(req, res, appDir);
-    }
-    if (method === "POST" && url === "/reorderPlayers") {
-      if (!requireGrandmaster(req, res)) return;
-      return reorderPlayers(req, res, appDir);
-    }
-    if (method === "POST" && url === "/createUser") {
-      if (!requireGrandmaster(req, res)) return;
-      return handleCreateUser(req, res);
-    }
-    if (method === "GET" && url === "/api/users") {
-      if (!requireAuth(req, res)) return;
-      return handleGetUsers(req, res);
-    }
-    if (method === "GET" && url === "/api/user-role") {
-      return handleGetUserRole(req, res);
-    }
-    if (method === "GET" && url === "/api/leaderboard") {
-      return getLeaderboard(res);
-    }
-    if (method === "GET" && url === "/playerNames") {
-      return getPlayerNames(res, appDir);
-    }
-    if (method === "GET" && url === "/groups") {
-      return getGroups(res);
-    }
-    if (method === "GET" && url === "/listGames") {
-      return listGames(res, appDir);
-    }
-    if (method === "GET" && url === "/getGameName") {
-      return getGameName(res);
-    }
-    if (method === "GET" && url === "/getGameType") {
-      return getGameType(res);
-    }
-    if (method === "GET" && url === "/getRound") {
-      return getRound(res);
-    }
-    if (method === "POST" && url === "/setRound") {
-      if (!requireGrandmaster(req, res)) return;
-      return setRound(req, res, appDir);
-    }
-    if (method === "POST" && url === "/saveGame") {
-      if (!requireGrandmaster(req, res)) return;
-      return saveGameInstance(req, res, appDir);
-    }
-    if (method === "POST" && url === "/createGroups") {
-      if (!requireGrandmaster(req, res)) return;
-      return createGroups(req, res, appDir);
-    }
-    if (method === "POST" && url === "/setGroupName") {
-      if (!requireGrandmaster(req, res)) return;
-      return setGroupName(req, res, appDir);
-    }
-    if (method === "POST" && url === "/startGameWithGroups") {
-      if (!requireGrandmaster(req, res)) return;
-      return startGameWithGroups(req, res, appDir);
-    }
-    if (method === "POST" && url === "/addPlayer") {
-      if (!requireGrandmaster(req, res)) return;
-      return addPlayer(req, res, appDir);
-    }
-    if (method === "POST" && url === "/markGameInactive") {
-      if (!requireGrandmaster(req, res)) return;
-      return markGameInactive(req, res, appDir);
-    }
-    if (method === "GET" && (url === "/" || url === "/index.html")) {
-      if (!requireGrandmaster(req, res)) return;
-      return homeRoute(res, appDir);
-    }
-    if (method === "GET" && pathname === "/enterNames") {
-      if (!requireGrandmaster(req, res)) return;
-      return renderEnterNames(res, appDir);
-    }
-    if (method === "GET" && pathname === "/game") {
-      if (!requireGrandmaster(req, res)) return;
-      const gameName = getQueryParam("game");
-      if (gameName) {
-        loadGameByName(appDir, gameName)
-          .then(() => {
-            const game = getGame();
-            const gameType = game.getGameType();
-            renderGamePage(res, appDir, gameType);
-          })
-          .catch((err) => {
-            console.error("Failed to load game:", err);
-            res.writeHead(500);
-            res.end("Failed to load game");
-          });
-        return;
-      } else {
-        try {
-          const game = getGame();
-          const gameType = game.getGameType();
-          return renderGamePage(res, appDir, gameType);
-        } catch (err) {
-          console.error("Error getting game type:", err);
-          return renderGamePage(res, appDir, "quiz");
-        }
-      }
-    }
-    if (method === "GET" && url === "/leaderboard") {
-      return renderLeaderboard(res, appDir);
-    }
-    if (method === "POST" && url === "/endGame") {
-      return saveGame(appDir).then(() => {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true }));
-      });
-    }
+    // Handle game routes
+    if (handleGameRoutes(req, res, method, url, pathname, getQueryParam, appDir)) return;
+
+    // Handle static files
     if (method === "GET" && url?.startsWith("/public/")) {
       return serveStatic(req, res, appDir);
     }
@@ -413,6 +221,230 @@ function createRequestListener(): http.RequestListener {
     res.writeHead(404);
     res.end("Not Found");
   };
+}
+
+/**
+ * Handle authentication-related routes.
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} method
+ * @param {string} pathname
+ * @returns {boolean} True if handled
+ */
+function handleAuthRoutes(req: IncomingMessage, res: ServerResponse, method: string, pathname: string): boolean {
+  if (method === "GET" && pathname === "/login") {
+    renderLoginPage(res);
+    return true;
+  }
+  if (method === "POST" && pathname === "/login") {
+    handleLogin(req, res);
+    return true;
+  }
+  if (method === "POST" && pathname === "/logout") {
+    handleLogout(req, res);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Handle game-related routes.
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} method
+ * @param {string} url
+ * @param {string} pathname
+ * @param {Function} getQueryParam
+ * @param {string} appDir
+ * @returns {boolean} True if handled
+ */
+function handleGameRoutes(
+  req: IncomingMessage,
+  res: ServerResponse,
+  method: string,
+  url: string,
+  pathname: string,
+  getQueryParam: (key: string) => string | null,
+  appDir: string
+): boolean {
+  if (method === "GET" && url === "/players") {
+    if (!requireGrandmaster(req, res)) return true;
+    getPlayers(res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/saveName") {
+    if (!requireGrandmaster(req, res)) return true;
+    saveName(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/setGameName") {
+    if (!requireGrandmaster(req, res)) return true;
+    setGameName(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/setGameType") {
+    if (!requireGrandmaster(req, res)) return true;
+    setGameType(req, res, appDir);
+    return true;
+  }
+  if ((method === "POST" || method === "DELETE") && url === "/deletePlayer") {
+    if (!requireGrandmaster(req, res)) return true;
+    deletePlayer(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/removeAllPlayers") {
+    if (!requireGrandmaster(req, res)) return true;
+    removeAllPlayers(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/resetPlayersForNewGame") {
+    if (!requireGrandmaster(req, res)) return true;
+    resetPlayersForNewGame(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/updateScore") {
+    if (!requireGrandmaster(req, res)) return true;
+    updatePlayerScore(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/setScore") {
+    if (!requireGrandmaster(req, res)) return true;
+    setPlayerScore(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/reorderPlayers") {
+    if (!requireGrandmaster(req, res)) return true;
+    reorderPlayers(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/createUser") {
+    if (!requireGrandmaster(req, res)) return true;
+    handleCreateUser(req, res);
+    return true;
+  }
+  if (method === "GET" && url === "/api/users") {
+    if (!requireAuth(req, res)) return true;
+    handleGetUsers(req, res);
+    return true;
+  }
+  if (method === "GET" && url === "/api/user-role") {
+    handleGetUserRole(req, res);
+    return true;
+  }
+  if (method === "GET" && url === "/api/leaderboard") {
+    getLeaderboard(res);
+    return true;
+  }
+  if (method === "GET" && url === "/playerNames") {
+    getPlayerNames(res, appDir);
+    return true;
+  }
+  if (method === "GET" && url === "/groups") {
+    getGroups(res);
+    return true;
+  }
+  if (method === "GET" && url === "/listGames") {
+    listGames(res, appDir);
+    return true;
+  }
+  if (method === "GET" && url === "/getGameName") {
+    getGameName(res);
+    return true;
+  }
+  if (method === "GET" && url === "/getGameType") {
+    getGameType(res);
+    return true;
+  }
+  if (method === "GET" && url === "/getRound") {
+    getRound(res);
+    return true;
+  }
+  if (method === "POST" && url === "/setRound") {
+    if (!requireGrandmaster(req, res)) return true;
+    setRound(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/saveGame") {
+    if (!requireGrandmaster(req, res)) return true;
+    saveGameInstance(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/createGroups") {
+    if (!requireGrandmaster(req, res)) return true;
+    createGroups(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/setGroupName") {
+    if (!requireGrandmaster(req, res)) return true;
+    setGroupName(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/startGameWithGroups") {
+    if (!requireGrandmaster(req, res)) return true;
+    startGameWithGroups(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/addPlayer") {
+    if (!requireGrandmaster(req, res)) return true;
+    addPlayer(req, res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/markGameInactive") {
+    if (!requireGrandmaster(req, res)) return true;
+    markGameInactive(req, res, appDir);
+    return true;
+  }
+  if (method === "GET" && (url === "/" || url === "/index.html")) {
+    if (!requireGrandmaster(req, res)) return true;
+    homeRoute(res, appDir);
+    return true;
+  }
+  if (method === "GET" && pathname === "/enterNames") {
+    if (!requireGrandmaster(req, res)) return true;
+    renderEnterNames(res, appDir);
+    return true;
+  }
+  if (method === "GET" && pathname === "/game") {
+    if (!requireGrandmaster(req, res)) return true;
+    const gameName = getQueryParam("game");
+    if (gameName) {
+      loadGameByName(appDir, gameName)
+        .then(() => {
+          const game = getGame();
+          const gameType = game.getGameType();
+          renderGamePage(res, appDir, gameType);
+        })
+        .catch((err) => {
+          console.error("Failed to load game:", err);
+          res.writeHead(500);
+          res.end("Failed to load game");
+        });
+      return true;
+    } else {
+      try {
+        const game = getGame();
+        const gameType = game.getGameType();
+        renderGamePage(res, appDir, gameType);
+        return true;
+      } catch (err) {
+        console.error("Error getting game type:", err);
+        renderGamePage(res, appDir, "quiz");
+        return true;
+      }
+    }
+  }
+  if (method === "GET" && url === "/leaderboard") {
+    renderLeaderboard(res, appDir);
+    return true;
+  }
+  if (method === "POST" && url === "/endGame") {
+    saveGame(appDir).then(() => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    });
+    return true;
+  }
+  return false;
 }
 
 /**

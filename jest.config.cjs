@@ -10,6 +10,7 @@ module.exports = {
   moduleNameMapper: {
     "^((?:\\.\\./)+src/.*)\\.js$": "$1.ts",
     "^\\./(controllers|model)/(.+)\\.js$": "<rootDir>/src/$1/$2.ts",
+    "^\\./(middleware)/(.+)\\.js$": "<rootDir>/src/$1/$2.ts",
     "^\\.\\./(controllers|model)/(.+)\\.js$": "<rootDir>/src/$1/$2.ts",
     "^\./gameManager\.js$": "<rootDir>/src/model/gameManager.ts",
     "^\./Player\.js$": "<rootDir>/src/model/Player.ts",
